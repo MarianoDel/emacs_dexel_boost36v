@@ -138,6 +138,25 @@ int main(void)
     CTRL_LED(DUTY_50_PERCENT);
     while (1);
 #endif
+
+#ifdef HARD_TEST_MODE_DYNAMIC_PWM
+    CTRL_LED(DUTY_50_PERCENT);
+
+    while (1)
+    {
+        for (unsigned short i = 0; i < 400; i += 100)
+        {
+            UpdateTIMSync(i);
+            Wait_ms (5000);
+        }
+
+        for (unsigned short i = 400; i > 0; i -= 100)
+        {
+            UpdateTIMSync(i);
+            Wait_ms (5000);
+        }
+    }
+#endif
     
 #ifdef HARD_TEST_MODE_RECT_SINUSOIDAL
     p_signal = mem_signal;

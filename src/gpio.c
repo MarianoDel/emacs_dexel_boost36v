@@ -74,8 +74,13 @@ void GPIO_Config (void)
 #endif
 
     temp = GPIOA->OTYPER;	//1 bit por pin
+#ifdef USE_TIM_OUTPUTS_OPEN_DRAIN
     temp &= 0xFFFFFEBF;         //PA6 PA8 open drain
     temp |= 0x00000140;
+#else
+    temp &= 0xFFFFFFFF;         
+    temp |= 0x00000000;
+#endif
     GPIOA->OTYPER = temp;
 
     temp = GPIOA->OSPEEDR;	//2 bits por pin

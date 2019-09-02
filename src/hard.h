@@ -44,17 +44,18 @@
 //-- Types of programs ----------
 // #define DRIVER_MODE_VOUT_FIXED
 // #define DRIVER_MODE_VOUT_BOOSTED
+// #define HARD_TEST_MODE_STATIC_PWM
+#define HARD_TEST_MODE_DYNAMIC_PWM
 // #define HARD_TEST_MODE
 // #define HARD_TEST_MODE_LINE_SYNC
 // #define HARD_TEST_MODE_CONDUCTION_ANGLE
 // #define HARD_TEST_MODE_RECT_SINUSOIDAL
-#define HARD_TEST_MODE_STATIC_PWM
 // #define HARD_TEST_MODE_ADC_SENSE
 
 //-- Types of led indications ----------
 // #define USE_LED_FOR_MAIN_STATES
 #define USE_LED_AS_TIM1_CH3
-
+// #define USE_TIM_OUTPUTS_OPEN_DRAIN
 
 //-- Frequency selection ----------
 // #define USE_FREQ_70KHZ    //max pwm: 686
