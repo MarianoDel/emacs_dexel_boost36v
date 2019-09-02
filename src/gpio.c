@@ -61,25 +61,26 @@ void GPIO_Config (void)
     if (!GPIOA_CLK)
         GPIOA_CLK_ON;
 
-#ifdef USE_LED_AS_TIM1_CH3
+#ifdef USE_LED_AS_TIM1_CH3    
     temp = GPIOA->MODER;	//2 bits por pin
-    temp &= 0xFFC0CC00;		//PA0 - PA4 analog input; PA6 alternative (TIM3 CH1)
-    temp |= 0x002523FF;		//PA8 PA9 output; PA10 alternative (TIM1 CH3)
+    temp &= 0xFCCCCFC0;		//PA0 - PA2 analog input; PA6 alternative (TIM3 CH1)
+    temp |= 0x0122203F;		//PA8 alternative (TIM1 CH1); PA10 alternative (TIM CH3) PA12 output
     GPIOA->MODER = temp;
 #else
     temp = GPIOA->MODER;	//2 bits por pin
-    temp &= 0xFFC0CC00;		//PA0 - PA4 analog input; PA6 alternative (TIM3 CH1)
-    temp |= 0x001523FF;		//PA8 - PA10 output
-    GPIOA->MODER = temp;    
+    temp &= 0xFCCCCFC0;		//PA0 - PA2 analog input; PA6 alternative (TIM3 CH1)
+    temp |= 0x0112203F;		//PA8 alternative (TIM1 CH1); PA10 PA12 output
+    GPIOA->MODER = temp;
 #endif
+
     temp = GPIOA->OTYPER;	//1 bit por pin
-    temp &= 0xFFFFFFBF;         //PA6 open drain
-    temp |= 0x00000040;
+    temp &= 0xFFFFFEBF;         //PA6 PA8 open drain
+    temp |= 0x00000140;
     GPIOA->OTYPER = temp;
 
     temp = GPIOA->OSPEEDR;	//2 bits por pin
-    temp &= 0xFFFFCFFF;
-    temp |= 0x00000000;		//PA6 low speed
+    temp &= 0xFCCCCFFF;
+    temp |= 0x00000000;		//PA6 PA8 PA10 PA12 low speed
     GPIOA->OSPEEDR = temp;
 
     temp = GPIOA->PUPDR;	//2 bits por pin
@@ -87,8 +88,6 @@ void GPIO_Config (void)
     temp |= 0x00000000;	
     GPIOA->PUPDR = temp;
 
-    //Alternate Fuction for GPIOA
-    // GPIOA->AFR[0] = 0x00001100;	//PA2 -> AF1; PA3 -> AF1;
 
     //--- GPIO B ---//
 #ifdef GPIOB_ENABLE
@@ -96,7 +95,7 @@ void GPIO_Config (void)
         GPIOB_CLK_ON;
 
     temp = GPIOB->MODER;	//2 bits por pin
-    temp &= 0xFFFFFFFF;		//
+    temp &= 0xFFFC3FFF;		//PB5 PB6 input mode
     temp |= 0x00000000;
     GPIOB->MODER = temp;
 
@@ -115,8 +114,6 @@ void GPIO_Config (void)
     temp |= 0x00000000;
     GPIOB->PUPDR = temp;
 
-    //Alternate Fuction for GPIOB
-    //GPIOB->AFR[0] = 0x00010000;	//PB4 -> AF1 enable pin on tim.c
 #endif
 
 #ifdef GPIOF_ENABLE
@@ -147,44 +144,24 @@ void GPIO_Config (void)
 
 #endif
 
-#if (defined WITH_OVERCURRENT_SHUTDOWN) || (defined WITH_AC_SYNC_INT)
-    //Interrupt en PA4 y PA5 or/and PA8
+#ifdef WITH_OVERCURRENT_SHUTDOWN
+    //Interrupt in PB5 and PB6
     if (!SYSCFG_CLK)
         SYSCFG_CLK_ON;
 
-#ifdef WITH_OVERCURRENT_SHUTDOWN
     SYSCFG->EXTICR[1] = 0x00000000; //Select Port A & Pin4 Pin5  external interrupt
     // EXTI->IMR |= 0x00000030; 			//Corresponding mask bit for interrupts EXTI4 EXTI5
     EXTI->EMR |= 0x00000000; 			//Corresponding mask bit for events
     EXTI->RTSR |= 0x00000030; 			//pin4 pin5 Interrupt line on rising edge
     EXTI->FTSR |= 0x00000000; 			//Interrupt line on falling edge
-#endif
-#ifdef WITH_AC_SYNC_INT
-    SYSCFG->EXTICR[2] = 0x00000000; //Select Port A & Pin8  external interrupt
-    // EXTI->IMR |= 0x00000100; 			//Corresponding mask bit for interrupts EXTI4 EXTI5
-    EXTI->EMR |= 0x00000000; 			//Corresponding mask bit for events
-    EXTI->RTSR |= 0x00000100; 			//pin8 Interrupt line on rising edge
-    EXTI->FTSR |= 0x00000000; 			//Interrupt line on falling edge
-#endif
 
     NVIC_EnableIRQ(EXTI4_15_IRQn);
-    NVIC_SetPriority(EXTI4_15_IRQn, 2);
-    
+    NVIC_SetPriority(EXTI4_15_IRQn, 2);    
 #endif    
 
 }
 
-#if (defined WITH_OVERCURRENT_SHUTDOWN) && (defined WITH_AC_SYNC_INT)
-inline void EXTIOff (void)
-{
-    EXTI->IMR &= ~0x00000130;
-}
-
-inline void EXTIOn (void)
-{
-    EXTI->IMR |= 0x00000130;
-}
-#elif defined WITH_OVERCURRENT_SHUTDOWN
+#ifdef WITH_OVERCURRENT_SHUTDOWN
 inline void EXTIOff (void)
 {
     EXTI->IMR &= ~0x00000030;
@@ -194,17 +171,8 @@ inline void EXTIOn (void)
 {
     EXTI->IMR |= 0x00000030;
 }
-#elif defined WITH_AC_SYNC_INT
-inline void EXTIOff (void)
-{
-    EXTI->IMR &= ~0x00000100;
-}
-
-inline void EXTIOn (void)
-{
-    EXTI->IMR |= 0x00000100;
-}
 #endif
+
 
 
 

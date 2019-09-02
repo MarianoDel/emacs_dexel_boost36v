@@ -1,4 +1,16 @@
-* PFC 150W CON MICRO stm32f030K6T6
+* BOOST 36V 3A CON MICRO stm32f030K6T6
+** Principio de funcionamiento
+   - Funcionan con 2 mosfets sincronizados TIM1 -> TIM3
+   - CTRL_Q2 (PA8 TIM1 CH1)
+   - CTRL_Q1 (PA6 TIM3 CH1)
+   - Ademas uso el LED en (PA10 TIM1 CH3) si selecciono USE_LED_AS_TIM1_CH3
+
+** Terminar en el firmware [0/4]
+   - [ ] Corregir configuracion de INT
+   - [ ] Activar bien INT
+   - [ ] Revisar signals pwm en synchro
+   - [ ] ADC synchro con pwm tim1 o tim3
+   
 ** Arranque Hardware
 *** ADC + DMA + TIM
 **** Tiempo teorico de conversion ADC con DMA
@@ -51,27 +63,6 @@
     - no por el d100w, sino que cuando el dimmer corta el ciclo comienza con errores
       de disparo en el TRIAC y ruidos extraños
 
-* Avances
-** Sinusidal Signal
-   - programa que genere senial senoial para controlr pin COMP en pwm
-
-** Sensado de Vin Vout
-   - verificar tensiones vin vout para poder posteriormente realimentar
-   - realimentar 
-
-** Fuente del uC lado entrada
-   - cambiar 78L33 por algo con menos consumo interno, baja Quiescent Current
-
-** V220_Sense Vline_Sense
-   - tiene mucho ruido, mejoradas las masas, agregar 10nF // a R19
-
-** Driver del Mosfet Ctrol_Mosfet
-   - tiene en algunas tensiones de alimentacion doble pulso, con los cambio se fue
-   - agregar 22ohms entre el push-pull y el gate, agregar 10K de gate a masa
-
-** LED indicador
-   - agregue 2k2 y 100nF en // al LED para poder conocer valores analogicos dentro
-     del micro. Lo uso como salida PWM.
 
 * Mediciones 24-12-19
 ** Generacion senial senoidal

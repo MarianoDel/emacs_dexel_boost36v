@@ -1,13 +1,13 @@
-//-----------------------------------------------------
-// #### PFC 150W PROJECT  F030 - Custom Board ####
+//--------------------------------------------------
+// #### BOOST 100W PROJECT  F030 - Custom Board ####
 // ##
 // ## @Author: Med
 // ## @Editor: Emacs - ggtags
 // ## @TAGS:   Global
 // ## @CPU:    STM32F030
 // ##
-// #### MAIN.C ########################################
-//-----------------------------------------------------
+// #### MAIN.C #####################################
+//--------------------------------------------------
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f0xx.h"
@@ -27,15 +27,9 @@
 #include "flash_program.h"
 #include "dsp.h"
 #include "it.h"
-#include "sync.h"
 
 
 // Externals -----------------------------------------------
-
-// -- Externals from or for Serial Port --------------------
-// volatile unsigned char tx1buff [SIZEOF_DATA];
-// volatile unsigned char rx1buff [SIZEOF_DATA];
-// volatile unsigned char usart1_have_data = 0;
 
 // -- Externals from or for the ADC ------------------------
 volatile unsigned short adc_ch [ADC_CHANNEL_QUANTITY];
@@ -68,44 +62,12 @@ volatile unsigned short timer_standby;
 volatile unsigned char timer_filters = 0;
 // volatile unsigned short dmax_permited = 0;
 
-#ifdef HARD_TEST_MODE_RECT_SINUSOIDAL
-#define USE_SIGNAL_CURRENT_SIN_1_A
-#define SIZEOF_SIGNAL 240
-
-unsigned short mem_signal [SIZEOF_SIGNAL] = {13,26,39,52,65,78,91,104,117,130,
-                                             143,156,169,182,195,207,220,233,246,258,
-                                             271,284,296,309,321,333,346,358,370,382,
-                                             394,406,418,430,442,453,465,477,488,499,
-                                             511,522,533,544,555,566,577,587,598,608,
-                                             619,629,639,649,659,669,678,688,697,707,
-                                             716,725,734,743,751,760,768,777,785,793,
-                                             801,809,816,824,831,838,845,852,859,866,
-                                             872,878,884,891,896,902,908,913,918,923,
-                                             928,933,938,942,946,951,955,958,962,965,
-                                             969,972,975,978,980,983,985,987,989,991,
-                                             993,994,995,996,997,998,999,999,999,1000,
-                                             999,999,999,998,997,996,995,994,993,991,
-                                             989,987,985,983,980,978,975,972,969,965,
-                                             962,958,955,951,946,942,938,933,928,923,
-                                             918,913,908,902,896,891,884,878,872,866,
-                                             859,852,845,838,831,824,816,809,801,793,
-                                             785,777,768,760,751,743,734,725,716,707,
-                                             697,688,678,669,659,649,639,629,619,608,
-                                             598,587,577,566,555,544,533,522,511,499,
-                                             488,477,465,453,442,430,418,406,394,382,
-                                             370,358,346,333,321,309,296,284,271,258,
-                                             246,233,220,207,195,182,169,156,143,130,
-                                             117,104,91,78,65,52,39,26,13,0};
-#endif
-
-unsigned short * p_signal;
 
 // Module Functions ----------------------------------------
 void TimingDelay_Decrement (void);
 // extern void EXTI4_15_IRQHandler(void);
 
 
-#define UNDERSAMPLING_TICKS    9    //100 - 1
 //-------------------------------------------//
 // @brief  Main program.
 // @param  None
@@ -116,10 +78,9 @@ int main(void)
     unsigned char i;
     unsigned short ii;
 
-    driver_states_t driver_state = AUTO_RESTART;
+    board_states_t board_state = AUTO_RESTART;
     unsigned char soft_start_cnt = 0;
     unsigned char undersampling = 0;
-    unsigned short pfc_multiplier = 0;
 
     unsigned short Vout_Sense_Filtered = 0;
     unsigned short Vline_Sense_Filtered = 0;
@@ -154,17 +115,16 @@ int main(void)
 
 //---------- Pruebas de Hardware --------//    
     // EXTIOff ();
+
+    TIM_1_Init ();	   //lo utilizo para mosfet Q2 y para el LED eventualmente
+    TIM_3_Init ();	   //lo utilizo para mosfet Q1 y para synchro ADC
+
+    EnablePreload_Mosfet_Q1;
+    EnablePreload_Mosfet_Q2;
     
-    TIM_3_Init();    //Used for mosfet channels control and ADC synchro
-#ifdef USE_LED_AS_TIM1_CH3
-    TIM_1_Init();
-#endif
-    // TIM_16_Init();    //free running with tick: 1us
-    // TIM16Enable();
-    // TIM_17_Init();    //with int, tick: 1us
     MA32Circular_Reset();
     
-    CTRL_MOSFET(DUTY_NONE);
+    UpdateTIMSync(DUTY_NONE);
     
     //ADC and DMA configuration
     AdcConfig();
@@ -173,8 +133,9 @@ int main(void)
     ADC1->CR |= ADC_CR_ADSTART;
     //end of ADC & DMA
 
-#ifdef HARD_TEST_MODE_DISABLE_PWM
-    CTRL_MOSFET(DUTY_10_PERCENT);
+#ifdef HARD_TEST_MODE_STATIC_PWM
+    UpdateTIMSync(DUTY_10_PERCENT);
+    CTRL_LED(DUTY_50_PERCENT);
     while (1);
 #endif
     
@@ -594,32 +555,6 @@ void TimingDelay_Decrement(void)
 
 void EXTI4_15_IRQHandler(void)
 {
-#ifdef WITH_AC_SYNC_INT
-    if (AC_SYNC_Int)
-    {
-        if (AC_SYNC_Int_Rising)
-        {
-            //reseteo tim
-            delta_t2 = TIM16->CNT;
-            TIM16->CNT = 0;
-            AC_SYNC_Int_Rising_Reset;
-            AC_SYNC_Int_Falling_Set;
-
-            SYNC_Rising_Edge_Handler();
-        }
-        else if (AC_SYNC_Int_Falling)
-        {
-            delta_t1 = TIM16->CNT;
-            AC_SYNC_Int_Falling_Reset;
-            AC_SYNC_Int_Rising_Set;
-            // ac_sync_int_flag = 1;
-            
-            SYNC_Falling_Edge_Handler();
-        }
-        AC_SYNC_Ack;
-    }
-#endif
-    
 #ifdef WITH_OVERCURRENT_SHUTDOWN
     if (OVERCURRENT_POS_Int)
     {
@@ -639,4 +574,4 @@ void EXTI4_15_IRQHandler(void)
 #endif
 }
 
-//------ EOF -------//
+//--- end of file ---//

@@ -78,21 +78,20 @@
 #define RCC_TIM17_CLK_OFF 	RCC->APB2ENR &= ~0x00040000
 
 
-#define EnablePreload_MosfetB    (TIM1->CCMR1 |= TIM_CCMR1_OC1PE)
-#define DisablePreload_MosfetB    (TIM1->CCMR1 &= ~TIM_CCMR1_OC1PE)
-#define UpdateTIM_MosfetB(X)    (TIM1->CCR1 = (X))
-
-
 //--- Exported wrapped functions ---//
-#ifdef WITH_TIM1_FB
-#define UpdateFB(X)    Update_TIM1_CH3(X)
-#endif
-#ifdef WITH_TIM14_FB
-#define UpdateFB(X)    Update_TIM14_CH1(X)
-#endif
-
-#define CTRL_MOSFET(X)     Update_TIM3_CH1(X)
 #define CTRL_LED(X)    Update_TIM1_CH3(X)
+
+#define EnablePreload_Mosfet_Q1    (TIM3->CR1 |= TIM_CR1_ARPE)
+#define DisablePreload_Mosfet_Q1    (TIM3->CR1 &= ~TIM_CR1_ARPE)
+#define UpdateTIM_Mosfet_Q1(X)    (TIM3->ARR = DUTY_50_PERCENT + (X))
+#define EnablePreload_Mosfet_Q2    (TIM1->CCMR1 |= TIM_CCMR1_OC1PE)
+#define DisablePreload_Mosfet_Q2    (TIM1->CCMR1 &= ~TIM_CCMR1_OC1PE)
+#define UpdateTIM_Mosfet_Q2(X)    (TIM1->CCR1 = (X))
+
+#define UpdateTIMSync(X)    do {\
+    TIM1->CCR1 = (X);                  \
+    TIM3->ARR = DUTY_50_PERCENT + (X); \
+    } while(0)
 
 
 //--- Exported functions ---//

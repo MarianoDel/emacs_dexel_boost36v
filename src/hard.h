@@ -1,5 +1,4 @@
 //---------------------------------------------
-// ##
 // ## @Author: Med
 // ## @Editor: Emacs - ggtags
 // ## @TAGS:   Global
@@ -41,73 +40,39 @@
 #define SOFTWARE_VERSION_1_0
 #endif
 
-
-//---- Features Configuration ----------------
-//features are activeted here and annouced in hard.c
-#define FEATURES
-
 // SOFTWARE Features -------------------------
 //-- Types of programs ----------
 // #define DRIVER_MODE_VOUT_FIXED
-#define DRIVER_MODE_VOUT_BOOSTED
+// #define DRIVER_MODE_VOUT_BOOSTED
 // #define HARD_TEST_MODE
 // #define HARD_TEST_MODE_LINE_SYNC
 // #define HARD_TEST_MODE_CONDUCTION_ANGLE
 // #define HARD_TEST_MODE_RECT_SINUSOIDAL
-// #define HARD_TEST_MODE_DISABLE_PWM
+#define HARD_TEST_MODE_STATIC_PWM
 // #define HARD_TEST_MODE_ADC_SENSE
 
 //-- Types of led indications ----------
-#define USE_LED_FOR_MAIN_STATES
-// #define USE_LED_FOR_MAINS_SYNC
-// #define USE_LED_FOR_POSITIVE_VOLTAGE
-// #define USE_LED_AS_TIM1_CH3
-// #define USE_LED_FOR_SIGNAL
+// #define USE_LED_FOR_MAIN_STATES
+#define USE_LED_AS_TIM1_CH3
+
 
 //-- Frequency selection ----------
 // #define USE_FREQ_70KHZ    //max pwm: 686
 #define USE_FREQ_48KHZ    //max pwm: 1000
 
 //-- Types of Interrupts ----------
-// #define WITH_AC_SYNC_INT
 // #define WITH_OVERCURRENT_SHUTDOWN
-
-//-- Types of Optoisolatar used ----------
-#define OPTO_KB817
-// #define OPTO_FOD8801
 
 
 //---- End of Features Configuration ----------
 
-//--- Stringtify Utils -----------------------
-#define STRING_CONCAT(str1,str2) #str1 " " #str2
-#define STRING_CONCAT_NEW_LINE(str1,str2) xstr(str1) #str2 "\n"
-#define xstr_macro(s) str_macro(s)
-#define str_macro(s) #s
 
 //--- Hardware Welcome Code ------------------//
-#ifdef HARDWARE_VERSION_1_0
-#define HARD "Hardware V: 1.0\n"
-#endif
 
 //--- Software Welcome Code ------------------//
-#ifdef SOFTWARE_VERSION_1_0
-#define SOFT "Software V: 1.0\n"
-#endif
-
 
 //-------- Others Configurations depending on the formers ------------
-#ifdef INVERTER_MODE_PURE_SINUSOIDAL
-#ifndef INVERTER_MODE
-#define INVERTER_MODE
-#endif
-#endif
 
-#if (defined DRIVER_MODE_VOUT_FIXED) || (defined DRIVER_MODE_VOUT_BOOSTED)
-#ifndef DRIVER_MODE
-#define DRIVER_MODE
-#endif
-#endif
 //-------- Hysteresis Conf ------------------------
 
 //-------- PWM Conf ------------------------
@@ -136,18 +101,6 @@
 #define V_450V    1004
 
     
-#if defined OPTO_KB817
-#define IOUT_3A    610
-#define IOUT_2A    406    //esto da 2.24A en frio 8-7-19
-#define IOUT_1A    203
-//Iup @2.38A 1.56V -> 484  ;;medido 5-7-2019
-#elif defined OPTO_FOD8801
-#define IOUT_3A    915
-#define IOUT_2A    610    //esto da 2.07A en frio 10-7-19
-#define IOUT_1A    305
-#else
-#error "define the opto in hard.h"
-#endif
 
 #if (defined USE_FREQ_70KHZ)
 #define SOFT_START_CNT_ROOF    140
@@ -159,52 +112,56 @@
 
 //------- PIN CONFIG ----------------------
 #ifdef VER_1_0
-//GPIOA pin0	Vbias_Sense
-//GPIOA pin1	Vup
-//GPIOA pin2	I_Sense
-//GPIOA pin3	Iup
-//GPIOA pin4	V220_Sense, Vline_Sense
+//GPIOA pin0	Sense_BOOST
+//GPIOA pin1	Sense_BAT
+//GPIOA pin2	Sense_PWR_36V
 
+//GPIOA pin3	
+//GPIOA pin4	
 //GPIOA pin5    NC
 
-//GPIOA pin6    TIM3_CH1 (CTRL_MOSFET)
+//GPIOA pin6    TIM3_CH1 (CTRL_Q1)
 
 //GPIOA pin7    
 //GPIOB pin0    
-//GPIOB pin1	
+//GPIOB pin1	NC
 
-//GPIOA pin8
-#define LEDR ((GPIOA->ODR & 0x0100) != 0)
-#define LEDR_ON	GPIOA->BSRR = 0x00000100
-#define LEDR_OFF GPIOA->BSRR = 0x01000000
+//GPIOA pin8    TIM3_CH1 (CTRL_Q2)
 
-//GPIOA pin9
-#define LEDG ((GPIOA->ODR & 0x0200) != 0)
-#define LEDG_ON	GPIOA->BSRR = 0x00000200
-#define LEDG_OFF GPIOA->BSRR = 0x02000000
+//GPIOA pin9    NC
 
 //GPIOA pin10	LED
-#define LED ((GPIOA->ODR & 0x0400) != 0)
-#define LED_ON	GPIOA->BSRR = 0x00000400
-#define LED_OFF GPIOA->BSRR = 0x04000000
+#define LED    ((GPIOA->ODR & 0x0400) != 0)
+#define LED_ON    (GPIOA->BSRR = 0x00000400)
+#define LED_OFF    (GPIOA->BSRR = 0x04000000)
 
-//GPIOA pin11	
-//GPIOA pin12	
+//GPIOA pin11    NC
+
+//GPIOA pin12	CTROL_SW
+#define CTRL_SW    ((GPIOA->ODR & 0x1000) != 0)
+#define CTRL_SW_ON    GPIOA->BSRR = 0x00001000)
+#define CTRL_SW_OFF    (GPIOA->BSRR = 0x10000000)
+
 //GPIOA pin13	
 //GPIOA pin14	
 //GPIOA pin15    NC
 
 //GPIOB pin3	
-//GPIOB pin4	
-//GPIOB pin5	
+//GPIOB pin4	NC
+
+//GPIOB pin5
+#define PROT_Q2 ((GPIOB->IDR & 0x0020) != 0)
+
 //GPIOB pin6
+#define PROT_Q1 ((GPIOB->IDR & 0x0040) != 0)
+
 //GPIOB pin7	NC
 #endif
 
 //------- END OF PIN CONFIG -------------------
 
 
-//DRIVER States
+//BOARD States
 typedef enum
 {
     POWER_UP = 0,
@@ -219,7 +176,7 @@ typedef enum
     AUTO_RESTART,
     POWER_DOWN
     
-} driver_states_t;
+} board_states_t;
 
 
 //ESTADOS DEL LED
@@ -245,24 +202,8 @@ typedef enum
 
 
 /* Module Functions ------------------------------------------------------------*/
-unsigned short GetHysteresis (unsigned char);
-unsigned char GetNew1to10 (unsigned short);
-void UpdateVGrid (void);
-void UpdateIGrid (void);
-unsigned short GetVGrid (void);
-unsigned short GetIGrid (void);
-unsigned short PowerCalc (unsigned short, unsigned short);
-unsigned short PowerCalcMean8 (unsigned short * p);
-void ShowPower (char *, unsigned short, unsigned int, unsigned int);
 void ChangeLed (unsigned char);
 void UpdateLed (void);
-unsigned short UpdateDMAX (unsigned short);
-unsigned short UpdateDMAXSF (unsigned short);
-unsigned short UpdateDmaxLout (unsigned short);
-unsigned short VoutTicksToVoltage (unsigned short);
-unsigned short VinTicksToVoltage (unsigned short);
-unsigned short Hard_GetDmaxLout (unsigned short, unsigned short);
-void WelcomeCodeFeatures (char *);
 
 unsigned char Hard_Update_Vline (unsigned short);
 unsigned short Hard_Get_Vline_Peak (void);

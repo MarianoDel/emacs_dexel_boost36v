@@ -15,8 +15,8 @@
 //--- Exported types ---//
 //--- Exported constants ---//
 //--- Enable of Ports Pins ---//
-// #define GPIOB_ENABLE
-//#define GPIOF_ENABLE
+#define GPIOB_ENABLE
+// #define GPIOF_ENABLE
 
 #define GPIOA_CLK (RCC->AHBENR & 0x00020000)
 #define GPIOA_CLK_ON RCC->AHBENR |= 0x00020000
