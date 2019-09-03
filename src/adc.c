@@ -72,8 +72,8 @@ void AdcConfig (void)
     ADC1->CFGR2 = ADC_ClockMode_SynClkDiv4;
 
     //set resolution, trigger & Continuos or Discontinuous
-    ADC1->CFGR1 |= ADC_Resolution_10b | ADC_ExternalTrigConvEdge_Rising | ADC_ExternalTrigConv_T3_TRGO;	//recordar ADC1->CR |= ADC_CR_ADSTART
-    // ADC1->CFGR1 |= ADC_Resolution_10b | ADC_ExternalTrigConvEdge_Rising | ADC_ExternalTrigConv_T1_TRGO;
+    // ADC1->CFGR1 |= ADC_Resolution_10b | ADC_ExternalTrigConvEdge_Rising | ADC_ExternalTrigConv_T3_TRGO;	//recordar ADC1->CR |= ADC_CR_ADSTART
+    ADC1->CFGR1 |= ADC_Resolution_10b | ADC_ExternalTrigConvEdge_Rising | ADC_ExternalTrigConv_T1_TRGO;
     //ADC1->CFGR1 |= ADC_Resolution_12b | ADC_CFGR1_DISCEN;
     // ADC1->CFGR1 |= ADC_Resolution_12b;
 

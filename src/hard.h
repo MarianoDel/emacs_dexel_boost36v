@@ -45,12 +45,13 @@
 // #define DRIVER_MODE_VOUT_FIXED
 // #define DRIVER_MODE_VOUT_BOOSTED
 // #define HARD_TEST_MODE_STATIC_PWM
-#define HARD_TEST_MODE_DYNAMIC_PWM
-// #define HARD_TEST_MODE
-// #define HARD_TEST_MODE_LINE_SYNC
-// #define HARD_TEST_MODE_CONDUCTION_ANGLE
-// #define HARD_TEST_MODE_RECT_SINUSOIDAL
+// #define HARD_TEST_MODE_DYNAMIC_PWM1
+// #define HARD_TEST_MODE_DYNAMIC_PWM2
 // #define HARD_TEST_MODE_ADC_SENSE
+// #define HARD_TEST_MODE_INT_WITH_PWM
+#define HARD_TEST_MODE_DSP_FILTERS
+// #define HARD_TEST_MODE_RECT_SINUSOIDAL
+
 
 //-- Types of led indications ----------
 // #define USE_LED_FOR_MAIN_STATES
@@ -62,7 +63,7 @@
 #define USE_FREQ_48KHZ    //max pwm: 1000
 
 //-- Types of Interrupts ----------
-// #define WITH_OVERCURRENT_SHUTDOWN
+#define WITH_OVERCURRENT_SHUTDOWN
 
 
 //---- End of Features Configuration ----------

@@ -5,11 +5,13 @@
    - CTRL_Q1 (PA6 TIM3 CH1)
    - Ademas uso el LED en (PA10 TIM1 CH3) si selecciono USE_LED_AS_TIM1_CH3
 
-** Terminar en el firmware [1/4]
-   - [ ] Corregir configuracion de INT
-   - [ ] Activar bien INT
+** Terminar en el firmware [6/6]
+   - [X] Corregir configuracion de INT
+   - [X] Activar bien INT
    - [X] Revisar signals pwm en synchro
-   - [ ] ADC synchro con pwm tim1 o tim3
+   - [X] Mediciones ADC
+   - [X] ADC synchro con pwm tim1 o tim3
+   - [X] pasar rutinas dsp a modelos nuevos
    
 ** Arranque Hardware
 *** ADC + DMA + TIM

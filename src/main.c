@@ -47,9 +47,9 @@ volatile unsigned short timer_led = 0;
 // Globals -------------------------------------------------
 volatile unsigned char overcurrent_shutdown = 0;
 //  for the filters
-ma8_data_obj_t vline_data_filter;
-ma8_data_obj_t vout_data_filter;
-ma8_data_obj_t vline_peak_data_filter;
+// ma8_data_obj_t vline_data_filter;
+// ma8_data_obj_t vout_data_filter;
+// ma8_data_obj_t vline_peak_data_filter;
 //  for the pid controllers
 pid_data_obj_t current_pid;
 pid_data_obj_t voltage_pid;
@@ -122,7 +122,7 @@ int main(void)
     EnablePreload_Mosfet_Q1;
     EnablePreload_Mosfet_Q2;
     
-    MA32Circular_Reset();
+    // MA32Circular_Reset();
     
     UpdateTIMSync(DUTY_NONE);
     
@@ -139,7 +139,7 @@ int main(void)
     while (1);
 #endif
 
-#ifdef HARD_TEST_MODE_DYNAMIC_PWM
+#ifdef HARD_TEST_MODE_DYNAMIC_PWM1
     CTRL_LED(DUTY_50_PERCENT);
 
     while (1)
@@ -157,107 +157,91 @@ int main(void)
         }
     }
 #endif
-    
-#ifdef HARD_TEST_MODE_RECT_SINUSOIDAL
-    p_signal = mem_signal;
+
+#ifdef HARD_TEST_MODE_DYNAMIC_PWM2
+    CTRL_LED(DUTY_50_PERCENT);
 
     while (1)
     {
-        if (sequence_ready)
+        for (unsigned short i = 0; i < 450; i++)
         {
-            sequence_ready_reset;
-            //aca la senial (el ultimo punto) termina en 0
-            if (p_signal < &mem_signal[(SIZEOF_SIGNAL - 1)])
-            {
-                p_signal++;
-            }
-            else
-            {
-                p_signal = mem_signal;
-#ifdef USE_LED_FOR_SIGNAL
-                if (LED)
-                    LED_OFF;
-                else
-                    LED_ON;
-#endif
-            }
-            CTRL_MOSFET(*p_signal);
+            UpdateTIMSync(i);
+            Wait_ms (11);
+        }
+
+        for (unsigned short i = 450; i > 0; i--)
+        {
+            UpdateTIMSync(i);
+            Wait_ms (11);
         }
     }
-#endif    // HARD_TEST_MODE_RECT_SINUSOIDAL
-
+#endif
+    
 #ifdef HARD_TEST_MODE_ADC_SENSE
+#ifndef USE_LED_AS_TIM1_CH3
+#error "we need USE_LED_AS_TIM1_CH3 in hard.h"
+#endif
     //disable pwm
-    CTRL_MOSFET(DUTY_NONE);
+    UpdateTIMSync(DUTY_NONE);
     
     while (1)
     {
         if (sequence_ready)
         {
             sequence_ready_reset;
-            // CTRL_LED(Vout_Sense);
-            // CTRL_LED(Vline_Sense);
-            CTRL_LED(I_Sense);
+            CTRL_LED(Sense_BOOST);
+            // CTRL_LED(Sense_BAT);
+            // CTRL_LED(Sense_PWR_36V);
         }
     }
 #endif
-    
-#ifdef HARD_TEST_MODE_CONDUCTION_ANGLE
-    Hard_Reset_Voltage_Filter();
+
+#ifdef HARD_TEST_MODE_INT_WITH_PWM
+#ifdef USE_LED_AS_TIM1_CH3
+#error "we dont need USE_LED_AS_TIM1_CH3 in hard.h"
+#endif
+#ifndef WITH_OVERCURRENT_SHUTDOWN
+#error "we need WITH_OVERCURRENT_SHUTDOWN in hard.h for this test"
+#endif
+    //enable pwm at 10%
+    UpdateTIMSync(DUTY_10_PERCENT);
+
+    //enable ints
+    EXTIOn();
     
     while (1)
     {
         if (sequence_ready)
         {
             sequence_ready_reset;
-
-            ii = Hard_Update_Voltage_Sense();
-
-            if (ii)
-            {
-                ii = 0;
-                CTRL_LED(Hard_Get_Conduction_Angle());
-                // CTRL_LED(Hard_Get_Hidden_Value());
-            }
         }
-    }
-#endif    // HARD_TEST_MODE_CONDUCTION_ANGLE
-
-#ifdef HARD_TEST_MODE_LINE_SYNC
-    Hard_Reset_Voltage_Filter();
-
-    // CTRL_MOSFET(DUTY_10_PERCENT);
-    // CTRL_LED(DUTY_50_PERCENT);
-    while (1)
-    {
-        if (sequence_ready)
-        {
-            sequence_ready_reset;
-            Hard_Update_Voltage_Filter(Vline_Sense);
-        }
-
-        Hard_Update_Voltage_Sense();
     }
 #endif
+
+
+#ifdef HARD_TEST_MODE_DSP_FILTERS
+#ifndef USE_LED_AS_TIM1_CH3
+#error "we need USE_LED_AS_TIM1_CH3 in hard.h"
+#endif
+    //disable pwm
+    UpdateTIMSync(DUTY_NONE);
+
+    //set the filters
+    ma16_u16_data_obj_t filter_object;
+    MA16_U16Circular_Reset(&filter_object);
     
-#ifdef HARD_TEST_MODE
-    ChangeLed(LED_STANDBY);
     while (1)
     {
         if (sequence_ready)
-        {
             sequence_ready_reset;
-            // if (LED)
-            //     LED_OFF;
-            // else
-            //     LED_ON;
-            // CTRL_MOSFET(Vbias_Sense);
-            // CTRL_MOSFET(Vup);
-            // CTRL_MOSFET(I_Sense);
-            // CTRL_MOSFET(Iup);
-            CTRL_MOSFET(V220_Sense);
+
+        if (!timer_standby)
+        {
+            unsigned short result = 0;
+            timer_standby = 100;
+            result = MA16_U16Circular(&filter_object, Sense_BOOST);
+            CTRL_LED(result);
         }
-        UpdateLed();
     }
 #endif
     
@@ -531,66 +515,40 @@ void TimingDelay_Decrement(void)
     if (timer_filters)
         timer_filters--;
 
-#ifdef INVERTER_ONLY_SYNC_AND_POLARITY
-    if (timer_no_sync)
-        timer_no_sync--;
-#endif
-    
-    // //cuenta de a 1 minuto
-    // if (secs > 59999)	//pasaron 1 min
-    // {
-    // 	minutes++;
-    // 	secs = 0;
-    // }
-    // else
-    // 	secs++;
-    //
-    // if (minutes > 60)
-    // {
-    // 	hours++;
-    // 	minutes = 0;
-    // }
-
-
 }
 
-#define AC_SYNC_Int        (EXTI->PR & 0x00000100)
-#define AC_SYNC_Set        (EXTI->IMR |= 0x00000100)
-#define AC_SYNC_Reset      (EXTI->IMR &= ~0x00000100)
-#define AC_SYNC_Ack        (EXTI->PR |= 0x00000100)
 
-#define AC_SYNC_Int_Rising          (EXTI->RTSR & 0x00000100)
-#define AC_SYNC_Int_Rising_Set      (EXTI->RTSR |= 0x00000100)
-#define AC_SYNC_Int_Rising_Reset    (EXTI->RTSR &= ~0x00000100)
+#ifdef WITH_OVERCURRENT_SHUTDOWN
 
-#define AC_SYNC_Int_Falling          (EXTI->FTSR & 0x00000100)
-#define AC_SYNC_Int_Falling_Set      (EXTI->FTSR |= 0x00000100)
-#define AC_SYNC_Int_Falling_Reset    (EXTI->FTSR &= ~0x00000100)
-
-#define OVERCURRENT_POS_Int        (EXTI->PR & 0x00000010)
-#define OVERCURRENT_POS_Ack        (EXTI->PR |= 0x00000010)
-#define OVERCURRENT_NEG_Int        (EXTI->PR & 0x00000020)
-#define OVERCURRENT_NEG_Ack        (EXTI->PR |= 0x00000020)
+#define PROT_Q1_Int        (EXTI->PR & 0x00000040)
+#define PROT_Q1_Ack        (EXTI->PR |= 0x00000040)
+#define PROT_Q2_Int        (EXTI->PR & 0x00000020)
+#define PROT_Q2_Ack        (EXTI->PR |= 0x00000020)
 
 void EXTI4_15_IRQHandler(void)
 {
-#ifdef WITH_OVERCURRENT_SHUTDOWN
-    if (OVERCURRENT_POS_Int)
+#ifdef HARD_TEST_MODE_INT_WITH_PWM
+    if (PROT_Q1_Int)
     {
-        HIGH_LEFT(DUTY_NONE);
-        //TODO: trabar el TIM3 aca!!!
-        overcurrent_shutdown = 1;
-        OVERCURRENT_POS_Ack;
+        LED_ON;
+        PROT_Q1_Ack;    //before this 800ns from the event
+                        //after this 1.04us from the event
     }
 
-    if (OVERCURRENT_NEG_Int)
+    if (PROT_Q2_Int)
     {
-        HIGH_RIGHT(DUTY_NONE);
-        //TODO: trabar el TIM3 aca!!!
-        overcurrent_shutdown = 2;
-        OVERCURRENT_NEG_Ack;
+        LED_OFF;
+        PROT_Q2_Ack;
     }
+
+    // if (LED)
+    //     LED_OFF;
+    // else
+    //     LED_ON;
 #endif
+    
 }
+
+#endif    //WITH_OVERCURRENT_SHUTDOWN
 
 //--- end of file ---//

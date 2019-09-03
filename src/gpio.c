@@ -154,10 +154,12 @@ void GPIO_Config (void)
     if (!SYSCFG_CLK)
         SYSCFG_CLK_ON;
 
-    SYSCFG->EXTICR[1] = 0x00000000; //Select Port A & Pin4 Pin5  external interrupt
-    // EXTI->IMR |= 0x00000030; 			//Corresponding mask bit for interrupts EXTI4 EXTI5
+    //EXTICR: only low 16 bits, 4 bits for each int-source
+    //for each nible 0 = PA; 1 = PB; ...
+    SYSCFG->EXTICR[1] = 0x00000110; //Select Port B & Pin5 Pin6  external interrupt
+    // EXTI->IMR |= 0x00000060; 			//Corresponding mask bit for interrupts EXTI4 EXTI5
     EXTI->EMR |= 0x00000000; 			//Corresponding mask bit for events
-    EXTI->RTSR |= 0x00000030; 			//pin4 pin5 Interrupt line on rising edge
+    EXTI->RTSR |= 0x00000060; 			//pin5 pin6 Interrupt line on rising edge
     EXTI->FTSR |= 0x00000000; 			//Interrupt line on falling edge
 
     NVIC_EnableIRQ(EXTI4_15_IRQn);
@@ -169,12 +171,12 @@ void GPIO_Config (void)
 #ifdef WITH_OVERCURRENT_SHUTDOWN
 inline void EXTIOff (void)
 {
-    EXTI->IMR &= ~0x00000030;
+    EXTI->IMR &= ~0x00000060;
 }
 
 inline void EXTIOn (void)
 {
-    EXTI->IMR |= 0x00000030;
+    EXTI->IMR |= 0x00000060;
 }
 #endif
 

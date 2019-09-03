@@ -26,9 +26,9 @@
 #endif
 //----------- End of ADC Configurations --------------//
 
-#define Vout_Sense    adc_ch[0]
-#define Vline_Sense    adc_ch[1]
-#define I_Sense    adc_ch[2]
+#define Sense_BOOST    adc_ch[0]
+#define Sense_BAT    adc_ch[1]
+#define Sense_PWR_36V    adc_ch[2]
 #define ADC_CHANNEL_QUANTITY         3
 #define ADC_LAST_CHANNEL_QUANTITY    (ADC_CHANNEL_QUANTITY - 1)
 
