@@ -51,25 +51,26 @@
     | 70KHz     | 23.6KHz        | 42.4us              |
     |           |                |                     |
 
-*** TODO Revisar sensado de corriente - parece no funcionar ok -
-    - mueve la corriente cuando se calienta, parece ser el opto o algo combinado con el opto
-
-*** TODO Arranque del micro desde 220Vac
-    - no funciona todavia, consume demasiado y no logra cargar el C del bias "C18"
-
-*** TODO Se mueve un poco la corriente de salida
-    - es medio inestable, poco, y se notan pequeños parpadeos en el LED
-    - probablemente ruido en el PID
-
-*** No sirve para dimmerizar con TRIAC
-    - no por el d100w, sino que cuando el dimmer corta el ciclo comienza con errores
-      de disparo en el TRIAC y ruidos extraños
 
 
-* Mediciones 24-12-19
-** Generacion senial senoidal
-   - con pwm 3.3V desde el micro y comp compensado con preset consigo:
-     senoidal rectificada de 1.4V a 4.1V delta: 2.76V
+
+
+
+* Mediciones 19-09-2019
+** Sensado de Tensiones vistos por el micro
+   - sacando pwm por el led
+
+     | Resolution | Sample Time[samples] | Channels | Clk Freq [MHz] |
+     |------------+----------------------+----------+----------------|
+     |         10 |                 71.5 |        3 |             12 |
+
+     | Sensed Channel | Active Time [us] | Total Time [us] |  Pts meas | Applied Voltage | Relation [pts/V] |
+     |----------------+------------------+-----------------+-----------+-----------------+------------------|
+     | Sense_BAT      |              9.2 |              21 | 438.09524 |           12.63 |        34.686876 |
+     | Sense_BOOST    |             17.6 |              21 | 838.09524 |            34.7 |        24.152601 |
+     | Sense_PWR_36V  |             17.6 |              21 | 838.09524 |            34.7 |        24.152601 |
+
+     #+TBLFM: @2$4=(@2$2/@2$3)*1000::@2$6=(@2$4/@2$5)::@3$4=(@3$2/@3$3)*1000::@3$6=(@3$4/@3$5)::@4$4=(@4$2/@4$3)*1000::@4$6=(@4$4/@4$5)
 
 ** Salida para desconexion
    - mandar 3.3V al pwm para apagar

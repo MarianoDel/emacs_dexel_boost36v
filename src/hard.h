@@ -45,18 +45,17 @@
 // #define DRIVER_MODE_VOUT_FIXED
 // #define DRIVER_MODE_VOUT_BOOSTED
 // #define HARD_TEST_MODE_STATIC_PWM
-// #define HARD_TEST_MODE_DYNAMIC_PWM1
-// #define HARD_TEST_MODE_DYNAMIC_PWM2
-// #define HARD_TEST_MODE_ADC_SENSE
+// #define HARD_TEST_MODE_DYNAMIC_PWM
+#define HARD_TEST_MODE_ADC_SENSE
 // #define HARD_TEST_MODE_INT_WITH_PWM
-#define HARD_TEST_MODE_DSP_FILTERS
+// #define HARD_TEST_MODE_DSP_FILTERS
 // #define HARD_TEST_MODE_RECT_SINUSOIDAL
 
 
 //-- Types of led indications ----------
 // #define USE_LED_FOR_MAIN_STATES
 #define USE_LED_AS_TIM1_CH3
-// #define USE_TIM_OUTPUTS_OPEN_DRAIN
+#define USE_TIM_OUTPUTS_OPEN_DRAIN
 
 //-- Frequency selection ----------
 // #define USE_FREQ_70KHZ    //max pwm: 686
@@ -114,11 +113,15 @@
 
 //------- PIN CONFIG ----------------------
 #ifdef VER_1_0
-//GPIOA pin0	Sense_BOOST
-//GPIOA pin1	Sense_BAT
+//GPIOA pin0	Sense_BAT
+//GPIOA pin1	Sense_BOOST
 //GPIOA pin2	Sense_PWR_36V
 
-//GPIOA pin3	
+//GPIOA pin3	CTROL_SW
+#define CTRL_SW    ((GPIOA->ODR & 0x0008) != 0)
+#define CTRL_SW_ON    (GPIOA->BSRR = 0x00000008)
+#define CTRL_SW_OFF    (GPIOA->BSRR = 0x00080000)
+
 //GPIOA pin4	
 //GPIOA pin5    NC
 
@@ -139,10 +142,7 @@
 
 //GPIOA pin11    NC
 
-//GPIOA pin12	CTROL_SW
-#define CTRL_SW    ((GPIOA->ODR & 0x1000) != 0)
-#define CTRL_SW_ON    GPIOA->BSRR = 0x00001000)
-#define CTRL_SW_OFF    (GPIOA->BSRR = 0x10000000)
+//GPIOA pin12	
 
 //GPIOA pin13	
 //GPIOA pin14	

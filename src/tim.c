@@ -134,11 +134,11 @@ void TIM_1_Init (void)
 #ifdef USE_LED_AS_TIM1_CH3
     TIM1->CCMR1 = 0x0060;    //CH1 output PWM mode 1 (channel active TIM1->CNT < TIM1->CCR1)
     TIM1->CCMR2 = 0x0060;    //CH3 output PWM mode 1 (channel active TIM1->CNT < TIM1->CCR1)
-    TIM1->CCER |= TIM_CCER_CC1E | TIM_CCER_CC3E;
+    TIM1->CCER |= TIM_CCER_CC1E  | TIM_CCER_CC1P | TIM_CCER_CC3E;    //CH1 inverted polarity
 #else
     TIM1->CCMR1 = 0x0060;    //CH1 output PWM mode 1 (channel active TIM1->CNT < TIM1->CCR1)
     TIM1->CCMR2 = 0x0000;    //
-    TIM1->CCER |= TIM_CCER_CC1E;
+    TIM1->CCER |= TIM_CCER_CC1E | TIM_CCER_CC1P;    //CH1 inverted polarity
 #endif
 
     TIM1->BDTR |= TIM_BDTR_MOE;
@@ -184,7 +184,7 @@ void TIM_3_Init (void)
     // TIM3->CCMR1 = 0x0060;    //CH1 output PWM mode 1 (channel active TIM3->CNT < TIM3->CCR1)
     TIM3->CCMR1 = 0x0070;    //CH1 output PWM mode 2 (channel inactive TIM3->CNT < TIM3->CCR1)
     TIM3->CCMR2 = 0x0000;
-    TIM3->CCER |= TIM_CCER_CC1E;    //CH1 enable on pin active high
+    TIM3->CCER |= TIM_CCER_CC1E | TIM_CCER_CC1P;    //CH1 inverted polarity
 
     TIM3->ARR = DUTY_50_PERCENT;
     TIM3->CNT = 0;

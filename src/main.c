@@ -33,7 +33,9 @@
 
 // -- Externals from or for the ADC ------------------------
 volatile unsigned short adc_ch [ADC_CHANNEL_QUANTITY];
+#ifdef ADC_WITH_INT
 volatile unsigned char seq_ready = 0;
+#endif
 
 // -- Externals for the timers -----------------------------
 volatile unsigned short timer_led = 0;
@@ -139,26 +141,8 @@ int main(void)
     while (1);
 #endif
 
-#ifdef HARD_TEST_MODE_DYNAMIC_PWM1
-    CTRL_LED(DUTY_50_PERCENT);
 
-    while (1)
-    {
-        for (unsigned short i = 0; i < 400; i += 100)
-        {
-            UpdateTIMSync(i);
-            Wait_ms (5000);
-        }
-
-        for (unsigned short i = 400; i > 0; i -= 100)
-        {
-            UpdateTIMSync(i);
-            Wait_ms (5000);
-        }
-    }
-#endif
-
-#ifdef HARD_TEST_MODE_DYNAMIC_PWM2
+#ifdef HARD_TEST_MODE_DYNAMIC_PWM
     CTRL_LED(DUTY_50_PERCENT);
 
     while (1)
@@ -183,14 +167,16 @@ int main(void)
 #endif
     //disable pwm
     UpdateTIMSync(DUTY_NONE);
-    
+
+    //to use Sense_BOOST use the CTRL_SW
+    CTRL_SW_ON;    //for Sense_BOOST
     while (1)
     {
         if (sequence_ready)
         {
             sequence_ready_reset;
-            CTRL_LED(Sense_BOOST);
             // CTRL_LED(Sense_BAT);
+            CTRL_LED(Sense_BOOST);
             // CTRL_LED(Sense_PWR_36V);
         }
     }
