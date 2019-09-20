@@ -72,16 +72,18 @@
 
      #+TBLFM: @2$4=(@2$2/@2$3)*1000::@2$6=(@2$4/@2$5)::@3$4=(@3$2/@3$3)*1000::@3$6=(@3$4/@3$5)::@4$4=(@4$2/@4$3)*1000::@4$6=(@4$4/@4$5)
 
-** Salida para desconexion
-   - mandar 3.3V al pwm para apagar
+** Comparadores de Proteccion
+   - mandando la senial directa del pwm (gate del mosfet) a la entrada del circuito de proteccion
+   - la senial pasa por el comparador y va al pin del micro, entra por interrupcion
 
-** Sensado de tension V
 
-   | VPOS  | Vup (R30) |
-   |-------+-----------|
-   | 34.8V | 1.68V     |
-   | 30V   | 1.4V      |
-   | 24V   | 0.88V     |
+   | accion en la INT         | Tiempo pwm -> LED |
+   |--------------------------+-------------------|
+   | subida del LED (prot Q1) | 960ns             |
+   | bajada del LED (prot Q2) | 1.4us             |
+
+   - cambio rutina int a leer una sola vez el EXTI->PR y luego hacer los ands
+     MISMO RESULTADO
 
 ** Sensado de corriente Rsense
 

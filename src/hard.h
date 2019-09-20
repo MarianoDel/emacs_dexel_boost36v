@@ -13,20 +13,6 @@
 //--- Hardware Board Version -------------------------------
 #define VER_1_0    //version original
 
-#define VOUT_SETPOINT    V_200V
-#define I_SETPOINT    CURRENT_ABOVE_EXPECTED
-#define CURRENT_ABOVE_EXPECTED    900
-#define CURRENT_EXTREAMLY_HIGH    1000
-
-#define VBIAS_HIGH    VBIAS_25V
-#define VBIAS_LOW     VBIAS_08V
-#define VBIAS_START   VBIAS_10V
-
-#define VLINE_START_THRESHOLD    V_120V
-#define VLINE_STOP_THRESHOLD    V_80V
-#define VLINE_ZERO_THRESHOLD    V_10V
-#define VOUT_MAX_THRESHOLD    V_450V
-#define VOUT_MIN_THRESHOLD    V_300V    //debiera ser la maxima tension que permito en vline
 
 
 //--- Configuration for Hardware Versions ------------------
@@ -46,15 +32,14 @@
 // #define DRIVER_MODE_VOUT_BOOSTED
 // #define HARD_TEST_MODE_STATIC_PWM
 // #define HARD_TEST_MODE_DYNAMIC_PWM
-#define HARD_TEST_MODE_ADC_SENSE
-// #define HARD_TEST_MODE_INT_WITH_PWM
-// #define HARD_TEST_MODE_DSP_FILTERS
-// #define HARD_TEST_MODE_RECT_SINUSOIDAL
+// #define HARD_TEST_MODE_ADC_SENSE
+#define HARD_TEST_MODE_INT_WITH_PWM
+
 
 
 //-- Types of led indications ----------
 // #define USE_LED_FOR_MAIN_STATES
-#define USE_LED_AS_TIM1_CH3
+// #define USE_LED_AS_TIM1_CH3
 #define USE_TIM_OUTPUTS_OPEN_DRAIN
 
 //-- Frequency selection ----------
@@ -80,26 +65,6 @@
 
 //-------- End Of Defines For Configuration ------
 
-#define VBIAS_25V    698
-#define VBIAS_12V    346
-#define VBIAS_10V    279
-#define VBIAS_08V    223
-//bias @12V 1.14V -> 346  ;;medido 5-7-19
-
-//input voltage and otput voltage witth the same divider; modif date 27-7-19
-//resist divider 33k//27k and 1M + 1M
-//divider: 135.7
-#define V_10V    23
-#define V_80V    182
-#define V_100V    228
-#define V_120V    274
-#define V_160V    365
-#define V_200V    457
-#define V_240V    548
-#define V_300V    685
-#define V_350V    799
-#define V_400V    914
-#define V_450V    1004
 
     
 
@@ -206,9 +171,5 @@ typedef enum
 /* Module Functions ------------------------------------------------------------*/
 void ChangeLed (unsigned char);
 void UpdateLed (void);
-
-unsigned char Hard_Update_Vline (unsigned short);
-unsigned short Hard_Get_Vline_Peak (void);
-unsigned char Hard_Get_Vline_Conduction_Angle (void);
 
 #endif /* _HARD_H_ */

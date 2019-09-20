@@ -205,31 +205,6 @@ int main(void)
 #endif
 
 
-#ifdef HARD_TEST_MODE_DSP_FILTERS
-#ifndef USE_LED_AS_TIM1_CH3
-#error "we need USE_LED_AS_TIM1_CH3 in hard.h"
-#endif
-    //disable pwm
-    UpdateTIMSync(DUTY_NONE);
-
-    //set the filters
-    ma16_u16_data_obj_t filter_object;
-    MA16_U16Circular_Reset(&filter_object);
-    
-    while (1)
-    {
-        if (sequence_ready)
-            sequence_ready_reset;
-
-        if (!timer_standby)
-        {
-            unsigned short result = 0;
-            timer_standby = 100;
-            result = MA16_U16Circular(&filter_object, Sense_BOOST);
-            CTRL_LED(result);
-        }
-    }
-#endif
     
     
     //--- Production Program ----------
@@ -526,7 +501,7 @@ void EXTI4_15_IRQHandler(void)
         LED_OFF;
         PROT_Q2_Ack;
     }
-
+    
     // if (LED)
     //     LED_OFF;
     // else
