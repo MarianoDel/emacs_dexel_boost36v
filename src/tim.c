@@ -186,12 +186,10 @@ void TIM_3_Init (void)
     TIM3->CCMR2 = 0x0000;
     TIM3->CCER |= TIM_CCER_CC1E | TIM_CCER_CC1P;    //CH1 inverted polarity
 
-    TIM3->ARR = DUTY_50_PERCENT;
+    TIM3->ARR = DUTY_100_PERCENT - 2;    //hago que termine siempre antes de tim1
     TIM3->CNT = 0;
     TIM3->PSC = 0;
-    //esto anula la salida
-    TIM3->CCR1 = DUTY_50_PERCENT_PLUS_ONE;        //delay = TIM3->CCRx = 512 - TIM1->CCR2
-
+    TIM3->CCR1 = 0;
     
     //Alternative Function Pins
     temp = GPIOA->AFR[0];

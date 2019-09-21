@@ -10,6 +10,26 @@
 #define _HARD_H_
 
 //--- Defines For Configuration ----------------------------
+// from output sensors
+#define MIN_PWR_36V    VOLTS_32
+#define MAX_PWR_36V    VOLTS_40
+
+#define VOLTS_40    966
+#define VOLTS_36    869
+#define VOLTS_32    773
+
+// from battery sensor
+#define MIN_BAT_16V    BATT_10
+#define MAX_BAT_16V    BATT_18
+
+#define BATT_10    347
+#define BATT_12    416
+#define BATT_18    624
+
+// where to go?
+#define VOUT_SETPOINT    VOLTS_36
+#define UNDERSAMPLING_TICKS    16
+
 //--- Hardware Board Version -------------------------------
 #define VER_1_0    //version original
 
@@ -28,17 +48,18 @@
 
 // SOFTWARE Features -------------------------
 //-- Types of programs ----------
-// #define DRIVER_MODE_VOUT_FIXED
-// #define DRIVER_MODE_VOUT_BOOSTED
-// #define HARD_TEST_MODE_STATIC_PWM
+#define HARD_TEST_MODE_STATIC_PWM
 // #define HARD_TEST_MODE_DYNAMIC_PWM
 // #define HARD_TEST_MODE_ADC_SENSE
-#define HARD_TEST_MODE_INT_WITH_PWM
+// #define HARD_TEST_MODE_INT_WITH_PWM
+// #define DRIVER_MODE_VOUT_FIXED
+// #define DRIVER_MODE_VOUT_BOOSTED
+// #define BOOST_MODE
 
 
 
 //-- Types of led indications ----------
-// #define USE_LED_FOR_MAIN_STATES
+#define USE_LED_FOR_MAIN_STATES
 // #define USE_LED_AS_TIM1_CH3
 #define USE_TIM_OUTPUTS_OPEN_DRAIN
 
@@ -132,10 +153,9 @@
 typedef enum
 {
     POWER_UP = 0,
-    SOFT_START,
+    SUPPLY_BY_MAINS,
+    SUPPLY_BY_BATTERY,
     VOLTAGE_MODE,
-    CURRENT_MODE,
-    OUTPUT_OVERVOLTAGE,
     INPUT_OVERVOLTAGE,
     INPUT_BROWNOUT,
     PEAK_OVERCURRENT,
@@ -159,13 +179,13 @@ typedef enum
 //Estados Externos de LED BLINKING
 #define LED_NO_BLINKING               0
 #define LED_STANDBY                   1
-#define LED_VOLTAGE_MODE              2
-#define LED_CURRENT_MODE              3
-#define LED_JUMPER_PROTECTED          4
+#define LED_SUPPLY_BY_MAINS              2
+#define LED_SUPPLY_BY_BATTERY              3
+#define LED_VOLTAGE_MODE          4
 #define LED_VIN_ERROR                 5
 #define LED_OVERCURRENT_POS           6
 #define LED_OVERCURRENT_NEG           7
-
+#define LED_POWER_UP    LED_STANDBY
 
 
 /* Module Functions ------------------------------------------------------------*/

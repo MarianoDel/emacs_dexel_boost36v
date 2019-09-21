@@ -88,11 +88,12 @@
 #define DisablePreload_Mosfet_Q2    (TIM1->CCMR1 &= ~TIM_CCMR1_OC1PE)
 #define UpdateTIM_Mosfet_Q2(X)    (TIM1->CCR1 = (X))
 
-#define UpdateTIMSync(X)    do {\
-    TIM1->CCR1 = (X);                  \
-    TIM3->ARR = DUTY_50_PERCENT + (X); \
+#define UpdateTIMSync(X)    do { \
+    TIM1->CCR1 = (X); \
+    TIM3->CCR1 = DUTY_100_PERCENT - (X); \
     } while(0)
 
+#define CTRL_MOSFET(X)    UpdateTIMSync(X)
 
 //--- Exported functions ---//
 

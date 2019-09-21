@@ -111,3 +111,15 @@
      generando tipico 7.6us 11.8us cada tanto
 
    - las secuencias largas debe ser por el modo undersampling
+
+* VERIFICACION DE PROTECCIONES
+QUITAR C DE SALIDA
+** Alimentar 36V invertido
+*** con 12V
+*** sin 12V
+
+** Alimentar 12V invertido
+*** con 36V
+*** sin 36V
+
+** Alimentar 12V y 36V todo invertido

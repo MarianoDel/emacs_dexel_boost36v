@@ -11,9 +11,6 @@
 
 //--- Defines for configuration -----------------
 #define USE_PID_CONTROLLERS
-#define USE_PID_FIXED_CONSTANTS
-// #define USE_PID_UPDATED_CONSTANTS
-
 // #define USE_MA32_U8_CIRCULAR
 #define USE_MA16_U16_CIRCULAR
 
@@ -50,8 +47,6 @@ unsigned short RandomGen (unsigned int);
 #ifdef USE_PID_CONTROLLERS
 short PID (pid_data_obj_t *);
 void PID_Flush_Errors (pid_data_obj_t *);
-short PID_roof (short, short, short, short *, short *);
-void PID_update_constants (unsigned short, unsigned short, unsigned short);
 #endif
 
 #ifdef USE_MA16_U16_CIRCULAR

@@ -49,11 +49,10 @@ volatile unsigned short timer_led = 0;
 // Globals -------------------------------------------------
 volatile unsigned char overcurrent_shutdown = 0;
 //  for the filters
-// ma8_data_obj_t vline_data_filter;
-// ma8_data_obj_t vout_data_filter;
-// ma8_data_obj_t vline_peak_data_filter;
+ma16_u16_data_obj_t sense_bat_data_filter;
+ma16_u16_data_obj_t sense_boost_data_filter;
+ma16_u16_data_obj_t sense_pwr_36_data_filter;
 //  for the pid controllers
-pid_data_obj_t current_pid;
 pid_data_obj_t voltage_pid;
 
 // ------- de los timers -------
@@ -67,7 +66,9 @@ volatile unsigned char timer_filters = 0;
 
 // Module Functions ----------------------------------------
 void TimingDelay_Decrement (void);
-// extern void EXTI4_15_IRQHandler(void);
+#ifdef WITH_OVERCURRENT_SHUTDOWN
+extern void EXTI4_15_IRQHandler(void);
+#endif
 
 
 //-------------------------------------------//
@@ -80,13 +81,13 @@ int main(void)
     unsigned char i;
     unsigned short ii;
 
-    board_states_t board_state = AUTO_RESTART;
+    board_states_t board_state = POWER_UP;
     unsigned char soft_start_cnt = 0;
     unsigned char undersampling = 0;
 
-    unsigned short Vout_Sense_Filtered = 0;
-    unsigned short Vline_Sense_Filtered = 0;
-    // unsigned short I_Sense_Filtered = 0;
+    unsigned short sense_bat_filtered = 0; 
+    unsigned short sense_boost_filtered = 0;
+    unsigned short sense_pwr_36_filtered = 0;
 
     short d = 0;
     // short ez1 = 0;
@@ -121,8 +122,8 @@ int main(void)
     TIM_1_Init ();	   //lo utilizo para mosfet Q2 y para el LED eventualmente
     TIM_3_Init ();	   //lo utilizo para mosfet Q1 y para synchro ADC
 
-    EnablePreload_Mosfet_Q1;
-    EnablePreload_Mosfet_Q2;
+    // EnablePreload_Mosfet_Q1;
+    // EnablePreload_Mosfet_Q2;
     
     // MA32Circular_Reset();
     
@@ -136,7 +137,7 @@ int main(void)
     //end of ADC & DMA
 
 #ifdef HARD_TEST_MODE_STATIC_PWM
-    UpdateTIMSync(DUTY_10_PERCENT);
+    UpdateTIMSync(DUTY_85_PERCENT);
     CTRL_LED(DUTY_50_PERCENT);
     while (1);
 #endif
@@ -208,26 +209,21 @@ int main(void)
     
     
     //--- Production Program ----------
-#ifdef DRIVER_MODE
+#ifdef BOOST_MODE
     //start the circular filters
-    MA8Circular_Reset(&vline_data_filter);
-    MA8Circular_Reset(&vline_peak_data_filter);
-    MA8Circular_Reset(&vout_data_filter);
+    MA16_U16Circular_Reset(&sense_bat_data_filter); 
+    MA16_U16Circular_Reset(&sense_boost_data_filter);
+    MA16_U16Circular_Reset(&sense_pwr_36_data_filter);
 
     //start the pid data for controllers
-    PID_Flush_Errors(&current_pid);
-    current_pid.kp = 128;
-    current_pid.ki = 0;
-    current_pid.kd = 0;
-
     PID_Flush_Errors(&voltage_pid);
     voltage_pid.kp = 0;
     voltage_pid.ki = 128;
     voltage_pid.kd = 0;
-    
 
-    CTRL_MOSFET(DUTY_NONE);
-
+    //timer to power up
+    ChangeLed(LED_POWER_UP);
+    timer_standby = 10;
     while (1)
     {
         //the most work involved is sample by sample
@@ -236,178 +232,129 @@ int main(void)
             sequence_ready_reset;
 
             //filters
-            Vline_Sense_Filtered = MA8Circular(&vline_data_filter, Vline_Sense);
-            Vout_Sense_Filtered = MA8Circular(&vout_data_filter, Vout_Sense);
-            // I_Sense_Filtered = MA8Circular_I(I_Sense);
+            sense_bat_filtered = MA16_U16Circular(&sense_bat_data_filter, Sense_BAT);
+            sense_boost_filtered = MA16_U16Circular(&sense_boost_data_filter, Sense_BOOST);
+            sense_pwr_36_filtered = MA16_U16Circular(&sense_pwr_36_data_filter, Sense_PWR_36V);
             
-            switch (driver_state)
+            switch (board_state)
             {
             case POWER_UP:
-                if (Vline_Sense_Filtered > VLINE_START_THRESHOLD)
+                //the filters completes their action on 16 * 1/24KHz = 666us
+                if (!timer_standby)
                 {
-                    driver_state = SOFT_START;
-                    timer_standby = 10;
+                    if ((sense_pwr_36_filtered > MIN_PWR_36V) &&
+                        (sense_pwr_36_filtered < MAX_PWR_36V))
+                    {
+                        CTRL_SW_OFF;
+                        board_state = SUPPLY_BY_MAINS;
+                        ChangeLed(LED_SUPPLY_BY_MAINS);
+                        timer_standby = 1000;    //doy algo de tiempo al relay
+                    }
+                    else if (sense_bat_filtered > MIN_BAT_16V)
+                    {
+                        CTRL_SW_ON;
+                        board_state = SUPPLY_BY_BATTERY;
+                        ChangeLed(LED_SUPPLY_BY_BATTERY);
+                    }
                 }
-
                 break;
 
-            case SOFT_START:
-                // soft_start_cnt++;
+            case SUPPLY_BY_MAINS:
+                if (!timer_standby)
+                {
+                    //input overvoltage se revisa afuera
+                    if (sense_pwr_36_filtered < MIN_PWR_36V)
+                    {
+                        board_state = POWER_UP;
+                        ChangeLed(LED_POWER_UP);
+                        soft_start_cnt = 0;
+                    }
+                }
+                break;
+
+            case SUPPLY_BY_BATTERY:
+                soft_start_cnt++;
                 
-                // //check to not go overvoltage
-                // if (Vout_Sense_Filtered < VOUT_SETPOINT)
-                // {
-                //     //hago un soft start respecto de la corriente y/o tension de salida
-                //     if (soft_start_cnt > SOFT_START_CNT_ROOF)    //update cada 2ms aprox.
-                //     {
-                //         soft_start_cnt = 0;
+                //check to not go overvoltage
+                if (sense_boost_filtered < VOUT_SETPOINT)
+                {
+                    //do a soft start cheking the voltage
+                    if (soft_start_cnt > SOFT_START_CNT_ROOF)    //update 2ms
+                    {
+                        soft_start_cnt = 0;
                     
-                //         if (d < DUTY_FOR_DMAX)
-                //         {
-                //             d++;
-                //             CTRL_MOSFET(d);
-                //         }
-                //         else
-                //         {
-                //             ChangeLed(LED_VOLTAGE_MODE);
-                //             driver_state = VOLTAGE_MODE;
-                //         }
-                //     }
-                // }
-                // else
-                // {
-                //     ChangeLed(LED_VOLTAGE_MODE);
-                //     driver_state = VOLTAGE_MODE;
-                // }
-                if (!timer_standby)    //doy tiempo de medio ciclo
-                {
-                    ChangeLed(LED_VOLTAGE_MODE);
-                    driver_state = VOLTAGE_MODE;
-                }                
-                break;
-
-            case AUTO_RESTART:
-                CTRL_MOSFET(DUTY_NONE);
-                d = 0;
-                PID_Flush_Errors(&current_pid);
-                PID_Flush_Errors(&voltage_pid);
-                ChangeLed(LED_STANDBY);
-                driver_state = POWER_UP;
-                break;
-        
-            case VOLTAGE_MODE:
-                //reviso no pasarme de corriente
-                //no quiero mas de 1V en la corriente
-                //1V / 3.3V * 1023 = 310
-                //esto por el ciclo de trabajo me da el promedio de corriente que mido
-                // current_calc = I_Sense * 1000;
-                // current_calc = current_calc / d;
-
-                // if (current_calc > 610)
-                //if current is extreamly high, just stop
-                if (I_Sense > CURRENT_EXTREAMLY_HIGH)
-                {
-                    d = DUTY_NONE;
-                    CTRL_MOSFET(d);                    
-                    LEDR_ON;
-                    timer_standby = 10;
-                    driver_state = PEAK_OVERCURRENT;
+                        if (d < DUTY_FOR_DMAX)
+                        {
+                            d++;
+                            CTRL_MOSFET(d);
+                        }
+                        // else
+                        // {
+                        //     ChangeLed(LED_VOLTAGE_MODE);
+                        //     board_state = VOLTAGE_MODE;
+                        // }
+                    }
                 }
                 else
                 {
-                    //fast current loop
-                    // unsigned int current_setpoint = 0;
-                    
-                    // current_setpoint = Vline_Sense * pfc_multiplier;
-                    // current_setpoint >>= 10;
-
-                    // current_pid.setpoint = current_setpoint;
-                    // if (undersampling > UNDERSAMPLING_TICKS)
-                    // {
-#define MAX_CURRENT    450
-                    if (Vline_Sense_Filtered < MAX_CURRENT)
-                        current_pid.setpoint = Vline_Sense_Filtered;
-                    else
-                        current_pid.setpoint = MAX_CURRENT;
-                    
-                        current_pid.sample = I_Sense;
-                        d = PID (&current_pid);
-
-                        if (d > 0)    //d can be negative
-                        {
-                            if (d > DUTY_FOR_DMAX)
-                                d = DUTY_FOR_DMAX;
-                        }
-                        else
-                            d = DUTY_NONE;
-
-                        CTRL_MOSFET(d);
-                    // }
-                    // else
-                    //     undersampling++;
-
+                    ChangeLed(LED_VOLTAGE_MODE);
+                    board_state = VOLTAGE_MODE;
                 }
+                
+                break;
 
-                // if (undersampling > UNDERSAMPLING_TICKS)
-                // {
-                //     unsigned short boost_setpoint = 0;
+            case VOLTAGE_MODE:
+                if (undersampling > UNDERSAMPLING_TICKS)
+                {
+                    voltage_pid.setpoint = VOUT_SETPOINT;
+                    voltage_pid.sample = sense_boost_filtered;    //only if undersampling > 16
+                    d = PID(&voltage_pid);
 
-                //     //40% boosted
-                //     boost_setpoint = MA8Circular_Only_Calc(&vline_data_filter);
-                //     boost_setpoint = boost_setpoint * 14;
-                //     boost_setpoint = boost_setpoint / 10;
-
-                //     if (boost_setpoint > Vout_Sense)
-                //     {
-                //         voltage_pid.setpoint = boost_setpoint;
-                //         voltage_pid.sample = Vout_Sense;
-                //         pfc_multiplier = PID(&voltage_pid);
-                //     }
-                // }
-                // else
-                //     undersampling++;
+                    if (d)
+                    {
+                        if (d > DUTY_FOR_DMAX)
+                            d = DUTY_FOR_DMAX;
+                    }
+                    else
+                        d = 0;
+                    
+                    CTRL_MOSFET(d);
+                }
+                else
+                    undersampling++;
 
                 break;
             
-            case OUTPUT_OVERVOLTAGE:
-                if (!timer_standby)
-                {
-                    LEDG_OFF;
-                    if (Vout_Sense_Filtered < VOUT_MIN_THRESHOLD)
-                        driver_state = AUTO_RESTART;
-                }
-                break;
-
             case INPUT_OVERVOLTAGE:
-                if (!timer_standby)
-                    driver_state = AUTO_RESTART;                
+                // if (!timer_standby)
+                //     driver_state = AUTO_RESTART;                
                 break;
 
             case INPUT_BROWNOUT:
-                if (!timer_standby)
-                {
-                    LEDG_OFF;
-                    if (Vline_Sense_Filtered > VLINE_START_THRESHOLD)
-                        driver_state = AUTO_RESTART;
-                }
+                // if (!timer_standby)
+                // {
+                //     LEDG_OFF;
+                //     if (Vline_Sense_Filtered > VLINE_START_THRESHOLD)
+                //         driver_state = AUTO_RESTART;
+                // }
                 break;
             
             case PEAK_OVERCURRENT:
-                if (!timer_standby)
-                {
-                    LEDR_OFF;
-                    driver_state = AUTO_RESTART;
-                }
+                // if (!timer_standby)
+                // {
+                //     LEDR_OFF;
+                //     driver_state = AUTO_RESTART;
+                // }
                 break;
 
             case BIAS_OVERVOLTAGE:
-                if (!timer_standby)
-                    driver_state = AUTO_RESTART;                
+                // if (!timer_standby)
+                //     driver_state = AUTO_RESTART;                
                 break;            
 
             case POWER_DOWN:
-                if (!timer_standby)
-                    driver_state = AUTO_RESTART;                
+                // if (!timer_standby)
+                //     driver_state = AUTO_RESTART;                
                 break;
 
             }
@@ -415,30 +362,21 @@ int main(void)
             //
             //The things that are directly attached to the samples period
             //
-            if (Hard_Update_Vline(Vline_Sense_Filtered))
-            {
-                //cycle_ended
-                MA8Circular(&vline_data_filter, Hard_Get_Vline_Peak());
-            }
+            // if (Hard_Update_Vline(Vline_Sense_Filtered))
+            // {
+            //     //cycle_ended
+            //     MA8Circular(&vline_data_filter, Hard_Get_Vline_Peak());
+            // }
         }    //end if sequence
 
         //
         //The things that are not directly attached to the samples period
         //
-        if (Vout_Sense_Filtered > VOUT_MAX_THRESHOLD)
-        {
-            CTRL_MOSFET(DUTY_NONE);
-            driver_state = OUTPUT_OVERVOLTAGE;
-            timer_standby = 10;
-            LEDG_ON;
-        }
-
-        // if ((Vline_Sense_Filtered < VLINE_STOP_THRESHOLD) &&
-        //     (driver_state > POWER_UP))
+        // if (Vout_Sense_Filtered > VOUT_MAX_THRESHOLD)
         // {
         //     CTRL_MOSFET(DUTY_NONE);
-        //     driver_state = INPUT_BROWNOUT;
-        //     timer_standby = 20;
+        //     driver_state = OUTPUT_OVERVOLTAGE;
+        //     timer_standby = 10;
         //     LEDG_ON;
         // }
 
@@ -448,7 +386,7 @@ int main(void)
         
     }    //end while 1
     
-#endif    // DRIVER_MODE
+#endif    // BOOST_MODE
     
     return 0;
 }
