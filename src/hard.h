@@ -28,6 +28,7 @@
 
 // where to go?
 #define VOUT_SETPOINT    VOLTS_36
+#define VOUT_MAX_THRESHOLD    VOLTS_40
 #define UNDERSAMPLING_TICKS    16
 
 //--- Hardware Board Version -------------------------------
@@ -48,13 +49,13 @@
 
 // SOFTWARE Features -------------------------
 //-- Types of programs ----------
-#define HARD_TEST_MODE_STATIC_PWM
+// #define HARD_TEST_MODE_STATIC_PWM
 // #define HARD_TEST_MODE_DYNAMIC_PWM
 // #define HARD_TEST_MODE_ADC_SENSE
 // #define HARD_TEST_MODE_INT_WITH_PWM
 // #define DRIVER_MODE_VOUT_FIXED
 // #define DRIVER_MODE_VOUT_BOOSTED
-// #define BOOST_MODE
+#define BOOST_MODE
 
 
 
@@ -157,10 +158,10 @@ typedef enum
     SUPPLY_BY_BATTERY,
     VOLTAGE_MODE,
     INPUT_OVERVOLTAGE,
+    OUTPUT_OVERVOLTAGE,
     INPUT_BROWNOUT,
     PEAK_OVERCURRENT,
     BIAS_OVERVOLTAGE,
-    AUTO_RESTART,
     POWER_DOWN
     
 } board_states_t;
@@ -182,7 +183,7 @@ typedef enum
 #define LED_SUPPLY_BY_MAINS              2
 #define LED_SUPPLY_BY_BATTERY              3
 #define LED_VOLTAGE_MODE          4
-#define LED_VIN_ERROR                 5
+#define LED_OUTPUT_OVERVOLTAGE                 5
 #define LED_OVERCURRENT_POS           6
 #define LED_OVERCURRENT_NEG           7
 #define LED_POWER_UP    LED_STANDBY

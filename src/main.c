@@ -137,7 +137,7 @@ int main(void)
     //end of ADC & DMA
 
 #ifdef HARD_TEST_MODE_STATIC_PWM
-    UpdateTIMSync(DUTY_85_PERCENT);
+    UpdateTIMSync(50);
     CTRL_LED(DUTY_50_PERCENT);
     while (1);
 #endif
@@ -288,11 +288,11 @@ int main(void)
                             d++;
                             CTRL_MOSFET(d);
                         }
-                        // else
-                        // {
-                        //     ChangeLed(LED_VOLTAGE_MODE);
-                        //     board_state = VOLTAGE_MODE;
-                        // }
+                        else
+                        {
+                            ChangeLed(LED_VOLTAGE_MODE);
+                            board_state = VOLTAGE_MODE;
+                        }
                     }
                 }
                 else
@@ -310,13 +310,19 @@ int main(void)
                     voltage_pid.sample = sense_boost_filtered;    //only if undersampling > 16
                     d = PID(&voltage_pid);
 
-                    if (d)
+                    if (d > 0)
                     {
                         if (d > DUTY_FOR_DMAX)
+                        {
                             d = DUTY_FOR_DMAX;
+                            voltage_pid.last_d = DUTY_FOR_DMAX;
+                        }
                     }
                     else
+                    {
                         d = 0;
+                        voltage_pid.last_d = 0;
+                    }
                     
                     CTRL_MOSFET(d);
                 }
@@ -326,10 +332,16 @@ int main(void)
                 break;
             
             case INPUT_OVERVOLTAGE:
-                // if (!timer_standby)
-                //     driver_state = AUTO_RESTART;                
                 break;
 
+            case OUTPUT_OVERVOLTAGE:
+                if (sense_boost_filtered < VOUT_MAX_THRESHOLD)
+                {
+                    board_state = POWER_UP;
+                    ChangeLed(LED_POWER_UP);
+                }
+                break;
+                
             case INPUT_BROWNOUT:
                 // if (!timer_standby)
                 // {
@@ -362,23 +374,19 @@ int main(void)
             //
             //The things that are directly attached to the samples period
             //
-            // if (Hard_Update_Vline(Vline_Sense_Filtered))
-            // {
-            //     //cycle_ended
-            //     MA8Circular(&vline_data_filter, Hard_Get_Vline_Peak());
-            // }
         }    //end if sequence
 
         //
         //The things that are not directly attached to the samples period
         //
-        // if (Vout_Sense_Filtered > VOUT_MAX_THRESHOLD)
-        // {
-        //     CTRL_MOSFET(DUTY_NONE);
-        //     driver_state = OUTPUT_OVERVOLTAGE;
-        //     timer_standby = 10;
-        //     LEDG_ON;
-        // }
+        if ((board_state != OUTPUT_OVERVOLTAGE) &&
+            (sense_boost_filtered > VOUT_MAX_THRESHOLD))
+        {
+            CTRL_MOSFET(DUTY_NONE);
+            board_state = OUTPUT_OVERVOLTAGE;
+            timer_standby = 10000;
+            ChangeLed(LED_OUTPUT_OVERVOLTAGE);
+        }
 
 #ifdef USE_LED_FOR_MAIN_STATES
         UpdateLed();

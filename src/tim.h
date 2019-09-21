@@ -90,7 +90,7 @@
 
 #define UpdateTIMSync(X)    do { \
     TIM1->CCR1 = (X); \
-    TIM3->CCR1 = DUTY_100_PERCENT - (X); \
+    TIM3->CCR1 = DUTY_100_PERCENT - 2 - (X); \
     } while(0)
 
 #define CTRL_MOSFET(X)    UpdateTIMSync(X)
