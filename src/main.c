@@ -217,8 +217,9 @@ int main(void)
 
     //start the pid data for controllers
     PID_Flush_Errors(&voltage_pid);
-    voltage_pid.kp = 0;
-    voltage_pid.ki = 128;
+    voltage_pid.kp = 1;
+    // voltage_pid.ki = 43;    //necesito error mayor a 3 por definicion en el pwm
+    voltage_pid.ki = 42;    //necesito error mayor a 3 por definicion en el pwm    
     voltage_pid.kd = 0;
 
     //timer to power up
@@ -262,8 +263,16 @@ int main(void)
             case SUPPLY_BY_MAINS:
                 if (!timer_standby)
                 {
-                    //input overvoltage se revisa afuera
+                    //input undervoltage
                     if (sense_pwr_36_filtered < MIN_PWR_36V)
+                    {
+                        board_state = POWER_UP;
+                        ChangeLed(LED_POWER_UP);
+                        soft_start_cnt = 0;
+                    }
+
+                    //input overvoltage
+                    if (sense_pwr_36_filtered > MAX_PWR_36V)
                     {
                         board_state = POWER_UP;
                         ChangeLed(LED_POWER_UP);
@@ -279,7 +288,7 @@ int main(void)
                 if (sense_boost_filtered < VOUT_SETPOINT)
                 {
                     //do a soft start cheking the voltage
-                    if (soft_start_cnt > SOFT_START_CNT_ROOF)    //update 2ms
+                    if (soft_start_cnt > SOFT_START_CNT_ROOF)    //update 200us aprox.
                     {
                         soft_start_cnt = 0;
                     
@@ -304,8 +313,9 @@ int main(void)
                 break;
 
             case VOLTAGE_MODE:
-                if (undersampling > UNDERSAMPLING_TICKS)
+                if (undersampling > (UNDERSAMPLING_TICKS - 1))
                 {
+                    undersampling = 0;
                     voltage_pid.setpoint = VOUT_SETPOINT;
                     voltage_pid.sample = sense_boost_filtered;    //only if undersampling > 16
                     d = PID(&voltage_pid);
@@ -329,16 +339,25 @@ int main(void)
                 else
                     undersampling++;
 
+                //si vuelve la alimentacion principal
+                if ((sense_pwr_36_filtered > MIN_PWR_36V) &&
+                    (sense_pwr_36_filtered < MAX_PWR_36V))
+                {
+                    CTRL_SW_OFF;
+                    board_state = SUPPLY_BY_MAINS;
+                    ChangeLed(LED_SUPPLY_BY_MAINS);
+                    timer_standby = 1000;    //doy algo de tiempo al relay
+                }
                 break;
             
             case INPUT_OVERVOLTAGE:
                 break;
 
             case OUTPUT_OVERVOLTAGE:
-                if (sense_boost_filtered < VOUT_MAX_THRESHOLD)
+                if (sense_boost_filtered < VOUT_SETPOINT)
                 {
-                    board_state = POWER_UP;
-                    ChangeLed(LED_POWER_UP);
+                    board_state = VOLTAGE_MODE;
+                    ChangeLed(LED_VOLTAGE_MODE;
                 }
                 break;
                 
@@ -384,7 +403,6 @@ int main(void)
         {
             CTRL_MOSFET(DUTY_NONE);
             board_state = OUTPUT_OVERVOLTAGE;
-            timer_standby = 10000;
             ChangeLed(LED_OUTPUT_OVERVOLTAGE);
         }
 

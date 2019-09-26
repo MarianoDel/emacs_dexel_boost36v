@@ -85,32 +85,26 @@
    - cambio rutina int a leer una sola vez el EXTI->PR y luego hacer los ands
      MISMO RESULTADO
 
-** Sensado de corriente Rsense
 
-   | IOUT  | Iup (R17) |
-   |-------+-----------|
-   | 2.38A | 1.56V     |
+* Mediciones 29-09-19
+** Sensado de corriente I_Sense_Q1 y I_Sense_Q2
 
-** Sensado de 220Vac - V220_sense
+   | Vin    | Iin  | IOUT  | I_Sense_Q1 [Vp] | I_Sense_Q2 [Vp] |
+   |--------+------+-------+-----------------+-----------------|
+   | 12V    | 8.6A | 2.44A | 1.36V           | 1.34V           |
+   | 15.25V | 6.5A | 2.44A | 1.26V           | 1.26V           |
+   |        |      |       |                 |                 |
 
-   | Vin acrms | V220_sense | Comments.                                |
-   |-----------+------------+------------------------------------------|
-   | 220Vac    | 2.52V 50Hz | mucho ruido, es una senoidal rectificada |
-   |           |            |                                          |
+** Se calientan mucho las bobinas L1 y L3
+*** Con baja tension de entrada calienta mucho el alambre (1 x 0.7mm x 53T)
 
-** Isense del mosfet
-   - 4 R 1ohm SMD en //
+*** Ver de poner dos bobinados en paralelo y limitar la tension minima de entrada
 
-   | Salida    | V(I_sense)                                |
-   |-----------+-------------------------------------------|
-   | 30V 2.38A | 260mV; 480mV (trapecio); Ton 6us T 15.6us |
-   
-** Tiempo de vuelta Voltage Mode - 30-7-19
-   - tiempo de proceso luego de sequence_ready (boost mode): 
-     sin generar tipico 5.04us, cada tanto 6.96us
-     generando tipico 7.6us 11.8us cada tanto
+** TODO Quitar proteccion de 10 seg cuando se quita la carga
+** TODO Verificar que Vin no pueda bajar tanto
+** TODO Oscila el PWM con tensiones de 16V de entrada
+** TODO Bobinas calientan los alambres
 
-   - las secuencias largas debe ser por el modo undersampling
 
 * VERIFICACION DE PROTECCIONES
 QUITAR C DE SALIDA
@@ -123,3 +117,8 @@ QUITAR C DE SALIDA
 *** sin 36V
 
 ** Alimentar 12V y 36V todo invertido
+
+
+* CAMBIOS DE HARDWARE FUTUROS
+** Poner pin de conexion de masa para mediciones
+** En las bobinas agrandar agujeros de pines para que no se rompa el through hole en un recambio

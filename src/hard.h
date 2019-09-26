@@ -29,7 +29,7 @@
 // where to go?
 #define VOUT_SETPOINT    VOLTS_36
 #define VOUT_MAX_THRESHOLD    VOLTS_40
-#define UNDERSAMPLING_TICKS    16
+#define UNDERSAMPLING_TICKS    100
 
 //--- Hardware Board Version -------------------------------
 #define VER_1_0    //version original
@@ -91,9 +91,9 @@
     
 
 #if (defined USE_FREQ_70KHZ)
-#define SOFT_START_CNT_ROOF    140
+#define SOFT_START_CNT_ROOF    4
 #elif (defined USE_FREQ_48KHZ)
-#define SOFT_START_CNT_ROOF    96
+#define SOFT_START_CNT_ROOF    2
 #else
 #error "select FREQ on hard.h"
 #endif
