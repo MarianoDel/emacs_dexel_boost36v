@@ -19,9 +19,6 @@
 #define VOLTS_32    773
 
 // from battery sensor
-#define MIN_BAT_16V    BATT_10
-#define MAX_BAT_16V    BATT_18
-
 #define BATT_10    347
 #define BATT_12    416
 #define BATT_18    624
@@ -30,6 +27,10 @@
 #define VOUT_SETPOINT    VOLTS_36
 #define VOUT_MAX_THRESHOLD    VOLTS_40
 #define UNDERSAMPLING_TICKS    100
+
+#define BATTERY_MIN    BATT_10
+#define BATTERY_MAX    BATT_18
+#define BATTERY_TO_RECONNECT  BATT_12 
 
 //--- Hardware Board Version -------------------------------
 #define VER_1_0    //version original
@@ -154,7 +155,9 @@
 typedef enum
 {
     POWER_UP = 0,
+    TO_SUPPLY_BY_MAINS,
     SUPPLY_BY_MAINS,
+    TO_SUPPLY_BY_BATTERY,
     SUPPLY_BY_BATTERY,
     VOLTAGE_MODE,
     INPUT_OVERVOLTAGE,
@@ -184,8 +187,9 @@ typedef enum
 #define LED_SUPPLY_BY_BATTERY              3
 #define LED_VOLTAGE_MODE          4
 #define LED_OUTPUT_OVERVOLTAGE                 5
-#define LED_OVERCURRENT_POS           6
-#define LED_OVERCURRENT_NEG           7
+#define LED_INPUT_BROWNOUT    6
+#define LED_OVERCURRENT_POS           7
+#define LED_OVERCURRENT_NEG           8
 #define LED_POWER_UP    LED_STANDBY
 
 

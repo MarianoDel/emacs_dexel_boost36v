@@ -78,9 +78,6 @@ extern void EXTI4_15_IRQHandler(void);
 //------------------------------------------//
 int main(void)
 {
-    unsigned char i;
-    unsigned short ii;
-
     board_states_t board_state = POWER_UP;
     unsigned char soft_start_cnt = 0;
     unsigned char undersampling = 0;
@@ -107,7 +104,7 @@ int main(void)
             else
                 LED_ON;
 
-            for (i = 0; i < 255; i++)
+            for (unsigned char i = 0; i < 255; i++)
             {
                 asm (	"nop \n\t"
                         "nop \n\t"
@@ -246,39 +243,46 @@ int main(void)
                     if ((sense_pwr_36_filtered > MIN_PWR_36V) &&
                         (sense_pwr_36_filtered < MAX_PWR_36V))
                     {
-                        CTRL_SW_OFF;
-                        board_state = SUPPLY_BY_MAINS;
-                        ChangeLed(LED_SUPPLY_BY_MAINS);
-                        timer_standby = 1000;    //doy algo de tiempo al relay
+                        board_state = TO_SUPPLY_BY_MAINS;
                     }
-                    else if (sense_bat_filtered > MIN_BAT_16V)
+                    else if (sense_bat_filtered > BATTERY_TO_RECONNECT)
                     {
-                        CTRL_SW_ON;
-                        board_state = SUPPLY_BY_BATTERY;
-                        ChangeLed(LED_SUPPLY_BY_BATTERY);
+                        board_state = TO_SUPPLY_BY_BATTERY;
                     }
                 }
                 break;
 
+            case TO_SUPPLY_BY_MAINS:
+                //reseteo del PID y control del mosfet
+                d = 0;
+                PID_Flush_Errors(&voltage_pid);
+                CTRL_MOSFET(0);                
+
+                //paso a alimentar desde la entrada de 36V
+                CTRL_SW_OFF;
+                board_state = SUPPLY_BY_MAINS;
+                ChangeLed(LED_SUPPLY_BY_MAINS);
+                timer_standby = 1000;    //doy algo de tiempo al relay
+                break;
+                
             case SUPPLY_BY_MAINS:
                 if (!timer_standby)
                 {
-                    //input undervoltage
-                    if (sense_pwr_36_filtered < MIN_PWR_36V)
-                    {
-                        board_state = POWER_UP;
-                        ChangeLed(LED_POWER_UP);
-                        soft_start_cnt = 0;
-                    }
-
-                    //input overvoltage
-                    if (sense_pwr_36_filtered > MAX_PWR_36V)
+                    //input undervoltage or overvoltage
+                    if ((sense_pwr_36_filtered < MIN_PWR_36V) ||
+                        (sense_pwr_36_filtered > MAX_PWR_36V)) 
                     {
                         board_state = POWER_UP;
                         ChangeLed(LED_POWER_UP);
                         soft_start_cnt = 0;
                     }
                 }
+                break;
+
+            case TO_SUPPLY_BY_BATTERY:
+                CTRL_SW_ON;
+                board_state = SUPPLY_BY_BATTERY;
+                ChangeLed(LED_SUPPLY_BY_BATTERY);
                 break;
 
             case SUPPLY_BY_BATTERY:
@@ -311,7 +315,7 @@ int main(void)
                 }
                 
                 break;
-
+                
             case VOLTAGE_MODE:
                 if (undersampling > (UNDERSAMPLING_TICKS - 1))
                 {
@@ -343,10 +347,21 @@ int main(void)
                 if ((sense_pwr_36_filtered > MIN_PWR_36V) &&
                     (sense_pwr_36_filtered < MAX_PWR_36V))
                 {
+                    board_state = TO_SUPPLY_BY_MAINS;
+                }
+
+                //si baja demasiado la bateria
+                if (sense_bat_filtered < BATTERY_MIN)
+                {
+                    //reseteo del PID y control del mosfet
+                    d = 0;
+                    PID_Flush_Errors(&voltage_pid);
+                    CTRL_MOSFET(0);                
+
                     CTRL_SW_OFF;
-                    board_state = SUPPLY_BY_MAINS;
-                    ChangeLed(LED_SUPPLY_BY_MAINS);
-                    timer_standby = 1000;    //doy algo de tiempo al relay
+                    board_state = INPUT_BROWNOUT;
+                    ChangeLed(LED_INPUT_BROWNOUT);
+                    timer_standby = 1000;
                 }
                 break;
             
@@ -357,35 +372,35 @@ int main(void)
                 if (sense_boost_filtered < VOUT_SETPOINT)
                 {
                     board_state = VOLTAGE_MODE;
-                    ChangeLed(LED_VOLTAGE_MODE;
+                    ChangeLed(LED_VOLTAGE_MODE);
                 }
                 break;
                 
             case INPUT_BROWNOUT:
-                // if (!timer_standby)
-                // {
-                //     LEDG_OFF;
-                //     if (Vline_Sense_Filtered > VLINE_START_THRESHOLD)
-                //         driver_state = AUTO_RESTART;
-                // }
+                if (!timer_standby)
+                {
+                    //si vuelve la alimentacion principal
+                    if ((sense_pwr_36_filtered > MIN_PWR_36V) &&
+                        (sense_pwr_36_filtered < MAX_PWR_36V))
+                    {
+                        board_state = TO_SUPPLY_BY_MAINS;
+                    }
+
+                    //si se recupera la bateria
+                    if (sense_bat_filtered > BATTERY_TO_RECONNECT)
+                    {
+                        board_state = TO_SUPPLY_BY_BATTERY;
+                    }
+                }
                 break;
             
             case PEAK_OVERCURRENT:
-                // if (!timer_standby)
-                // {
-                //     LEDR_OFF;
-                //     driver_state = AUTO_RESTART;
-                // }
                 break;
 
             case BIAS_OVERVOLTAGE:
-                // if (!timer_standby)
-                //     driver_state = AUTO_RESTART;                
                 break;            
 
             case POWER_DOWN:
-                // if (!timer_standby)
-                //     driver_state = AUTO_RESTART;                
                 break;
 
             }

@@ -98,12 +98,15 @@
 ** Se calientan mucho las bobinas L1 y L3
 *** Con baja tension de entrada calienta mucho el alambre (1 x 0.7mm x 53T)
 
-*** Ver de poner dos bobinados en paralelo y limitar la tension minima de entrada
+*** DONE Ver de poner dos bobinados en paralelo y limitar la tension minima de entrada
+    CLOSED: [2019-10-01 Tue 09:22]
 
-** TODO Quitar proteccion de 10 seg cuando se quita la carga
-** TODO Verificar que Vin no pueda bajar tanto
+** DONE Quitar proteccion de 10 seg cuando se quita la carga
+   CLOSED: [2019-10-01 Tue 09:27]
+** DONE Verificar que Vin no pueda bajar tanto
+   CLOSED: [2019-10-01 Tue 11:31]
 ** TODO Oscila el PWM con tensiones de 16V de entrada
-** TODO Bobinas calientan los alambres
+
 
 
 * VERIFICACION DE PROTECCIONES
