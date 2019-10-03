@@ -214,10 +214,16 @@ int main(void)
 
     //start the pid data for controllers
     PID_Flush_Errors(&voltage_pid);
+
+#ifdef USE_CAR_BATTERY
     voltage_pid.kp = 1;
-    // voltage_pid.ki = 43;    //necesito error mayor a 3 por definicion en el pwm
     voltage_pid.ki = 42;    //necesito error mayor a 3 por definicion en el pwm    
     voltage_pid.kd = 0;
+#elif defined USE_BI_MOUNT_BATTERY
+    voltage_pid.kp = 0;
+    voltage_pid.ki = 21;    //necesito error mayor a 3 por definicion en el pwm    
+    voltage_pid.kd = 0;    
+#endif
 
     //timer to power up
     ChangeLed(LED_POWER_UP);

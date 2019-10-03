@@ -10,6 +10,9 @@
 #define _HARD_H_
 
 //--- Defines For Configuration ----------------------------
+// #define USE_CAR_BATTERY
+#define USE_BI_MOUNT_BATTERY
+
 // from output sensors
 #define MIN_PWR_36V    VOLTS_32
 #define MAX_PWR_36V    VOLTS_40
@@ -21,6 +24,8 @@
 // from battery sensor
 #define BATT_10    347
 #define BATT_12    416
+#define BATT_14    485
+#define BATT_16    555
 #define BATT_18    624
 
 // where to go?
@@ -28,9 +33,17 @@
 #define VOUT_MAX_THRESHOLD    VOLTS_40
 #define UNDERSAMPLING_TICKS    100
 
+#if defined USE_CAR_BATTERY
 #define BATTERY_MIN    BATT_10
+#define BATTERY_MAX    BATT_16
+#define BATTERY_TO_RECONNECT  BATT_12
+#elif defined USE_BI_MOUNT_BATTERY
+#define BATTERY_MIN    BATT_12
 #define BATTERY_MAX    BATT_18
-#define BATTERY_TO_RECONNECT  BATT_12 
+#define BATTERY_TO_RECONNECT  BATT_14
+#else
+#error "Select type of battery on hard.h"
+#endif
 
 //--- Hardware Board Version -------------------------------
 #define VER_1_0    //version original

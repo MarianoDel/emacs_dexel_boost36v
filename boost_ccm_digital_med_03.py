@@ -54,7 +54,7 @@ Plant_out_sim = Plant_out.simplify()
 # Desde aca utilizo ceros y polos que entrego sympy #
 #####################################################
 # planta = sympy_to_lti(Plant_out_sim)
-sensado = sympy_to_lti(Plant_out_sim * sense_probe_alpha)
+sensado = sympy_to_lti(Plant_out_sim * sense_probe_alpha / 3.3)
 # print ("planta con sympy:")
 # print (planta)
 
@@ -116,9 +116,9 @@ vout_plant = np.zeros(t.size)
 # kp_dig = kp - ki_dig / 2 #
 # kd_dig = kd * Fsampling  #
 ############################
-# con undersampling = 100
+# con undersampling = 100 y 50
 ki_dig = 6 / 128
-kp_dig = 0
+kp_dig = 1 / 128
 kd_dig = 0
 # con undersampling = 100 y 50
 # ki_dig = 6 / 128
@@ -148,7 +148,7 @@ print (pid_dig)
 # Realimento punto a punto con setpoint #
 #########################################
 # Respuesta escalon de la planta punto a punto
-tiempo_de_simulacion = 0.2
+tiempo_de_simulacion = 0.5
 print('td:')
 print (td)
 t = np.arange(0, tiempo_de_simulacion, td)
@@ -158,24 +158,32 @@ b_planta = np.transpose(planta_dig_tustin_n)
 a_planta = np.transpose(planta_dig_tustin_d)
 
 vout_plant = np.zeros(t.size)
+vin_plant = np.zeros(t.size)
 
 ############################################
 # Armo la senial que quiero en el SETPOINT #
 ############################################
-vin_setpoint = np.ones(t.size) * 36 * sense_probe_alpha
+vin_setpoint = np.ones(t.size) * 36 * sense_probe_alpha * 1000 / 3.3
+vin_setpoint.astype(int)
+vin_setpoint = vin_setpoint / 1000
 
 d = np.zeros(t.size)
 error = np.zeros(t.size)
 max_d_pwm = 0.85
-under_roof = 99
+under_roof = 49
 undersampling = 0
+integral_term = np.zeros(t.size)
 
 for i in range(2, len(vout_plant)):
     ###################################################
     # primero calculo el error, siempre punto a punto #
     ###################################################
-    error[i] = vin_setpoint[i] - vout_plant[i-1]
-
+    dummy_adc_out = int(vout_plant[i-1] * 1000)
+    dummy_adc_out = dummy_adc_out / 1000
+    # vout_plant[i - 1] = dummy_adc_out / 1000    
+    
+    # error[i] = vin_setpoint[i] - vout_plant[i-1]
+    error[i] = vin_setpoint[i] - dummy_adc_out
 
     #############################################################
     # aplico lazo PID y ajusto los maximo y minimos que permito #
@@ -184,9 +192,20 @@ for i in range(2, len(vout_plant)):
         #nada
         undersampling = undersampling + 1
         d[i] = d[i-1]
+        integral_term[i] = integral_term[i-1]
     else:
         undersampling = 0
-        d[i] = b_pid[0] * error[i] + b_pid[1] * error[i-1] + b_pid[2] * error[i-2] - a_pid[1] * d[i-1]
+
+        # desarmo k1 y el termino integral para tener mejor definicion
+        integral_term[i] = integral_term[i-1] + ki_dig * error[i]
+        k1 = kp_dig * error[i] + integral_term[i] + kd_dig * error[i]
+        if integral_term[i] > 0.001:
+            integral_term[i] = 0
+            
+        d[i] = k1 + b_pid[1] * error[i-1] + b_pid[2] * error[i-2] - a_pid[1] * d[i-1]
+        # d[i] = b_pid[0] * error[i] + b_pid[1] * error[i-1] + b_pid[2] * error[i-2] - a_pid[1] * d[i-1]
+        dummy_d = int(d[i] * 1000)
+        d[i] = dummy_d / 1000
         
     if d[i] > max_d_pwm:
         d[i] = max_d_pwm
@@ -213,6 +232,7 @@ ax.grid()
 ax.plot(t, d, 'r')
 ax.plot(t, error, 'g')
 ax.plot(t, vin_setpoint, 'y')
+ax.plot(t, integral_term, 'b')
 # ax.stem(t, vout_plant / sense_probe_alpha)
 # ax.plot(t, vout_plant / sense_probe_alpha, 'c')
 ax.plot(t, vout_plant, 'c')

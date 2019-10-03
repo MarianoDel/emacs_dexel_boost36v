@@ -31,10 +31,10 @@ from tc_udemm import sympy_to_lti, lti_to_sympy
 # Input_step_value = 0.67
 
 # 16V input
-fn = 164.5
-Max_peak_value = 63
-Final_value = 47.7
-Input_step_value = 0.67
+fn = 136.4
+Max_peak_value = 56
+Final_value = 35.6
+Input_step_value = 0.53
 
 # Auxiliary calcs
 wn = fn * 2 * np.pi

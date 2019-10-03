@@ -24,10 +24,10 @@ from tc_udemm import sympy_to_lti, lti_to_sympy
 # Always on CCM. Step from 0.17 to 0.67 without feedback #
 ##########################################################
 # From the simulation results:
-fn = 166.8
-Max_peak_value = 54
-Final_value = 35.7
-Input_step_value = 0.67
+fn = 136.4
+Max_peak_value = 56
+Final_value = 35.6
+Input_step_value = 0.53
 sense_probe_alpha = 1.8 / (1.8 + 22)
 
 # Auxiliary calcs
