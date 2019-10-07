@@ -147,15 +147,15 @@ short PID (pid_data_obj_t * p)
 
     //K1
     acc = k1 * error;
-    val_k1 = acc >> PID_CONSTANT_DIVIDER;
+    val_k1 = acc / 128;
 
     //K2
     acc = k2 * p->error_z1;
-    val_k2 = acc >> PID_CONSTANT_DIVIDER;
+    val_k2 = acc / 128;
 
     //K3
     acc = k3 * p->error_z2;
-    val_k3 = acc >> PID_CONSTANT_DIVIDER;
+    val_k3 = acc / 128;
 
     d = p->last_d + val_k1 - val_k2 + val_k3;
 
@@ -173,6 +173,65 @@ void PID_Flush_Errors (pid_data_obj_t * p)
     p->error_z1 = 0;
     p->error_z2 = 0;
 }
+
+short PID_Small_Ki (pid_data_obj_t * p)
+{
+    int acc = 0;
+    short error = 0;
+    short d = 0;
+
+    unsigned short k1_small = 0;
+    unsigned short k2 = 0;
+    unsigned short k3 = 0;
+    
+    short val_k1 = 0;
+    short val_k2 = 0;
+    short val_k3 = 0;
+
+    // k1 = p->kp + p->ki + p->kd;
+    k2 = p->kp + p->kd + p->kd;
+    k3 = p->kd;
+    
+    error = p->setpoint - p->sample;
+
+    //K1 -- desarmo K1 para mayor definicion del integral
+    p->ki_accumulator += p->ki * error;
+    k1_small = p->kp + p->kd;
+    acc = k1_small * error + p->ki_accumulator;
+
+    if ((p->ki_accumulator > 127) || (p->ki_accumulator < -127))
+        p->ki_accumulator = 0;
+    
+    val_k1 = acc / 128;
+
+    //K2
+    acc = k2 * p->error_z1;
+    val_k2 = acc / 128;
+
+    //K3
+    acc = k3 * p->error_z2;
+    val_k3 = acc / 128;
+
+    d = p->last_d + val_k1 - val_k2 + val_k3;
+
+    //Update PID variables
+    p->error_z2 = p->error_z1;
+    p->error_z1 = error;
+    p->last_d = d;
+
+    return d;
+}
+
+
+void PID_Small_Ki_Flush_Errors (pid_data_obj_t * p)
+{
+    p->last_d = 0;
+    p->ki_accumulator = 0;
+    p->error_z1 = 0;
+    p->error_z2 = 0;
+}
+
+
 #endif    //USE_PID_CONTROLLERS
 
 //--- end of file ---//

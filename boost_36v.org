@@ -125,3 +125,46 @@ QUITAR C DE SALIDA
 * CAMBIOS DE HARDWARE FUTUROS
 ** Poner pin de conexion de masa para mediciones
 ** En las bobinas agrandar agujeros de pines para que no se rompa el through hole en un recambio
+
+* VERIFICAR EL ALGORITMO PID EN EL MICRO
+** Problemas con el desplazamiento en los acumuladores
+   - dividir por 128 da un resultado parejo alrededor del 0
+     1 / 128 = 0
+     -1 / 128 = 0
+
+   - el desplazamiento da un resultado desparejo en la division
+     1 >> 7 = 0
+     -1 >> 7 = -1
+
+** Corrijo el codigo con estas opciones -- Lo que genere menos codigo
+   - dividir acumuladores por 128
+     val_k1 = acc / 128;
+
+   - desplazar corrijiendo por valor absoluto
+     if (acc < 0)
+     {
+         acc = -acc;
+         val_k1 = acc >> PID_CONSTANT_DIVIDER;
+         val_k1 = -val_k1;
+     }
+     else
+        val_k1 = acc >> PID_CONSTANT_DIVIDER;
+
+** Codigo Cambiado
+desplazando
+ .text.PID      0x08000a34      0x124 ./src/dsp.o
+                0x08000a34                PID
+
+dividiendo
+ .text.PID      0x08000a34      0x13c ./src/dsp.o
+                0x08000a34                PID
+** Medicion del tiempo de la vuelta PID
+
+   | Tipo de division | Tiempo |
+   |------------------+--------|
+   | >> 7             | 6.2us  |
+   | /128             | 6.6us  |
+
+** Corte de Bateria
+   - Con el corte de 12V minimo y 14V reconexion rebota un par de veces despues 
+     del corte, 4 o 5 veces cada unos 5 minutos aprox.

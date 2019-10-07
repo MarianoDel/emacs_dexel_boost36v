@@ -36,6 +36,7 @@ typedef struct {
     short last_d;
     short error_z1;
     short error_z2;
+    short ki_accumulator;    
     unsigned short kp;
     unsigned short ki;
     unsigned short kd;
@@ -47,6 +48,8 @@ unsigned short RandomGen (unsigned int);
 #ifdef USE_PID_CONTROLLERS
 short PID (pid_data_obj_t *);
 void PID_Flush_Errors (pid_data_obj_t *);
+short PID_Small_Ki (pid_data_obj_t *);
+void PID_Small_Ki_Flush_Errors (pid_data_obj_t *);
 #endif
 
 #ifdef USE_MA16_U16_CIRCULAR

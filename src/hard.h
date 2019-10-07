@@ -19,6 +19,7 @@
 
 #define VOLTS_40    966
 #define VOLTS_36    869
+#define VOLTS_34    820
 #define VOLTS_32    773
 
 // from battery sensor
@@ -30,8 +31,9 @@
 
 // where to go?
 #define VOUT_SETPOINT    VOLTS_36
+#define VOUT_FOR_SOFT_START    VOLTS_34
 #define VOUT_MAX_THRESHOLD    VOLTS_40
-#define UNDERSAMPLING_TICKS    100
+#define UNDERSAMPLING_TICKS    20
 
 #if defined USE_CAR_BATTERY
 #define BATTERY_MIN    BATT_10
@@ -69,6 +71,7 @@
 // #define HARD_TEST_MODE_INT_WITH_PWM
 // #define DRIVER_MODE_VOUT_FIXED
 // #define DRIVER_MODE_VOUT_BOOSTED
+// #define SOFT_TEST_MODE_PID
 #define BOOST_MODE
 
 
@@ -132,7 +135,7 @@
 //GPIOB pin0    
 //GPIOB pin1	NC
 
-//GPIOA pin8    TIM3_CH1 (CTRL_Q2)
+//GPIOA pin8    TIM1_CH1 (CTRL_Q2)
 
 //GPIOA pin9    NC
 
@@ -205,6 +208,11 @@ typedef enum
 #define LED_OVERCURRENT_NEG           8
 #define LED_POWER_UP    LED_STANDBY
 
+#define LED_TOGGLE do { if (LED) \
+                            LED_OFF; \
+                        else         \
+                            LED_ON;  \
+                      } while (0)
 
 /* Module Functions ------------------------------------------------------------*/
 void ChangeLed (unsigned char);

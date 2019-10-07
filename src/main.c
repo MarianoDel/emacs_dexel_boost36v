@@ -119,8 +119,8 @@ int main(void)
     TIM_1_Init ();	   //lo utilizo para mosfet Q2 y para el LED eventualmente
     TIM_3_Init ();	   //lo utilizo para mosfet Q1 y para synchro ADC
 
-    // EnablePreload_Mosfet_Q1;
-    // EnablePreload_Mosfet_Q2;
+    EnablePreload_Mosfet_Q1;
+    EnablePreload_Mosfet_Q2;
     
     // MA32Circular_Reset();
     
@@ -202,7 +202,33 @@ int main(void)
     }
 #endif
 
+#ifdef SOFT_TEST_MODE_PID
+    //start the pid data for controllers
+    PID_Flush_Errors(&voltage_pid);
+    voltage_pid.kp = 0;
+    voltage_pid.ki = 1;
+    voltage_pid.kd = 0;
+    voltage_pid.setpoint = 100;
+    
+    short output [256] = { 0 };
+    unsigned short input [256] = {[0 ... 127] = 100, [128 ... 255] = 101 };
+    for (unsigned short i = 0; i < 256; i++)
+    {
+        voltage_pid.sample = input[i];
+        output[i] = PID(&voltage_pid);
+        LED_TOGGLE;
+    }
 
+    //dummy assigment
+    for (unsigned short i = 0; i < 256; i++)
+    {
+        if (output[i] != input[i])
+            i = 256;
+    }
+
+    while (1);
+#endif
+    
     
     
     //--- Production Program ----------
@@ -213,15 +239,15 @@ int main(void)
     MA16_U16Circular_Reset(&sense_pwr_36_data_filter);
 
     //start the pid data for controllers
-    PID_Flush_Errors(&voltage_pid);
+    PID_Small_Ki_Flush_Errors(&voltage_pid);
 
 #ifdef USE_CAR_BATTERY
     voltage_pid.kp = 1;
-    voltage_pid.ki = 42;    //necesito error mayor a 3 por definicion en el pwm    
+    voltage_pid.ki = 3;    //necesito error mayor a 3 por definicion en el pwm    
     voltage_pid.kd = 0;
 #elif defined USE_BI_MOUNT_BATTERY
-    voltage_pid.kp = 0;
-    voltage_pid.ki = 21;    //necesito error mayor a 3 por definicion en el pwm    
+    voltage_pid.kp = 1;
+    voltage_pid.ki = 3;    //necesito error mayor a 3 por definicion en el pwm    
     voltage_pid.kd = 0;    
 #endif
 
@@ -261,7 +287,7 @@ int main(void)
             case TO_SUPPLY_BY_MAINS:
                 //reseteo del PID y control del mosfet
                 d = 0;
-                PID_Flush_Errors(&voltage_pid);
+                PID_Small_Ki_Flush_Errors(&voltage_pid);
                 CTRL_MOSFET(0);                
 
                 //paso a alimentar desde la entrada de 36V
@@ -278,6 +304,7 @@ int main(void)
                     if ((sense_pwr_36_filtered < MIN_PWR_36V) ||
                         (sense_pwr_36_filtered > MAX_PWR_36V)) 
                     {
+                        timer_standby = 1000;
                         board_state = POWER_UP;
                         ChangeLed(LED_POWER_UP);
                         soft_start_cnt = 0;
@@ -295,7 +322,7 @@ int main(void)
                 soft_start_cnt++;
                 
                 //check to not go overvoltage
-                if (sense_boost_filtered < VOUT_SETPOINT)
+                if (sense_boost_filtered < VOUT_FOR_SOFT_START)
                 {
                     //do a soft start cheking the voltage
                     if (soft_start_cnt > SOFT_START_CNT_ROOF)    //update 200us aprox.
@@ -309,6 +336,8 @@ int main(void)
                         }
                         else
                         {
+                            //update PID
+                            voltage_pid.last_d = d;
                             ChangeLed(LED_VOLTAGE_MODE);
                             board_state = VOLTAGE_MODE;
                         }
@@ -316,6 +345,8 @@ int main(void)
                 }
                 else
                 {
+                    //update PID
+                    voltage_pid.last_d = d;
                     ChangeLed(LED_VOLTAGE_MODE);
                     board_state = VOLTAGE_MODE;
                 }
@@ -328,7 +359,7 @@ int main(void)
                     undersampling = 0;
                     voltage_pid.setpoint = VOUT_SETPOINT;
                     voltage_pid.sample = sense_boost_filtered;    //only if undersampling > 16
-                    d = PID(&voltage_pid);
+                    d = PID_Small_Ki(&voltage_pid);
 
                     if (d > 0)
                     {
@@ -361,7 +392,7 @@ int main(void)
                 {
                     //reseteo del PID y control del mosfet
                     d = 0;
-                    PID_Flush_Errors(&voltage_pid);
+                    PID_Small_Ki_Flush_Errors(&voltage_pid);
                     CTRL_MOSFET(0);                
 
                     CTRL_SW_OFF;
