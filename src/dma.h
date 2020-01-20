@@ -11,7 +11,7 @@
 #define _DMA_H_
 
 //--- Defines for configuration ----------------
-// #define DMA_WITH_INTERRUPT
+// #define DMA_CH1_WITH_INTERRUPT
 
 //--- Exported types ---//
 #define RCC_DMA_CLK (RCC->AHBENR & RCC_AHBENR_DMAEN)
@@ -27,8 +27,8 @@
 
 //--- Module Functions ---//
 void DMAConfig(void);
-void DMAEnableInterrupt (void);
-void DMADisableInterrupt (void);
+void DMA_Channel1_EnableInterrupt (void);
+void DMA_Channel1_DisableInterrupt (void);
 void DMA1_Channel1_IRQHandler (void);
 
 
