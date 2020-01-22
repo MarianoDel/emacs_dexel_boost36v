@@ -20,6 +20,9 @@
 #define DUTY_FOR_DMAX           (DUTY_85_PERCENT)
 #define DUTY_50_PERCENT_PLUS_ONE    (DUTY_50_PERCENT + 1)
 #define DUTY_ALWAYS        (DUTY_100_PERCENT + 1)
+
+#define DUTY_FOR_DMAX_WITH_DITHER    (DUTY_FOR_DMAX << 3)
+
 #if (defined USE_FREQ_48KHZ)
 #define DUTY_00_PERCENT        0
 #define DUTY_5_PERCENT		50
@@ -93,6 +96,9 @@
 
 #define CTRL_MOSFET(X)    UpdateTIMSync(X)
 
+#define EnableDitherInterrupt    (TIM1->DIER |= TIM_DIER_UIE)
+#define DisableDitherInterrupt    (TIM1->DIER &= ~TIM_DIER_UIE)    
+    
 //--- Exported functions ---//
 
 
@@ -127,9 +133,10 @@ void TIM17Enable (void);
 void TIM17Disable (void);
 
 
-void Wait_ms (unsigned short wait);
-#endif
-//--- End ---//
+void Wait_ms (unsigned short);
+void TIM_LoadDitherSequences (unsigned short);
 
 
-//--- END OF FILE ---//
+#endif    /* _TIM_H_ */
+
+//--- end of file ---//

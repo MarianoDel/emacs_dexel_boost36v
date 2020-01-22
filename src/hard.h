@@ -75,10 +75,17 @@
 #define BOOST_MODE
 
 
+//-- Types of PWM Modes ----------
+// #define USE_PWM_NO_DITHER
+#define USE_PWM_WITH_DITHER
+
 
 //-- Types of led indications ----------
 #define USE_LED_FOR_MAIN_STATES
 // #define USE_LED_AS_TIM1_CH3
+// #define USE_LED_FOR_TIM1_INT
+
+
 #define USE_TIM_OUTPUTS_OPEN_DRAIN
 
 //-- Frequency selection ----------

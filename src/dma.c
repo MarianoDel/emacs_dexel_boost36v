@@ -57,28 +57,28 @@ void DMAConfig(void)
     //////////////////////////////////
     // DMA1 Channel 2 Configuration //
     //////////////////////////////////
-    //Configuro el control del DMA CH2 para el PWM dither en channel
-    DMA1_Channel2->CCR = 0;
-    //priority very high
-    //memory halfword
-    //peripheral halfword
-    //increment memory
-    DMA1_Channel2->CCR |= DMA_CCR_PL | DMA_CCR_MSIZE_0 | DMA_CCR_PSIZE_0 | DMA_CCR_MINC;
-    //DMA1_Channel2->CCR |= DMA_Mode_Circular | DMA_CCR_TCIE;
-    //cicular mode
-    DMA1_Channel2->CCR |= DMA_CCR_CIRC;
+    // //Configuro el control del DMA CH2 para el PWM dither en channel
+    // DMA1_Channel2->CCR = 0;
+    // //priority very high
+    // //memory halfword
+    // //peripheral halfword
+    // //increment memory
+    // DMA1_Channel2->CCR |= DMA_CCR_PL | DMA_CCR_MSIZE_0 | DMA_CCR_PSIZE_0 | DMA_CCR_MINC;
+    // //DMA1_Channel2->CCR |= DMA_Mode_Circular | DMA_CCR_TCIE;
+    // //cicular mode
+    // DMA1_Channel2->CCR |= DMA_CCR_CIRC;
 
-    //Tamaño del buffer a transmitir
-    DMA1_Channel2->CNDTR = ADC_CHANNEL_QUANTITY;
+    // //Tamaño del buffer a transmitir
+    // DMA1_Channel2->CNDTR = ADC_CHANNEL_QUANTITY;
 
-    //Address del periferico
-    DMA1_Channel2->CPAR = (uint32_t) &ADC1->DR;
+    // //Address del periferico
+    // DMA1_Channel2->CPAR = (uint32_t) &ADC1->DR;
 
-    //Address en memoria
-    DMA1_Channel2->CMAR = (uint32_t) &adc_ch[0];
+    // //Address en memoria
+    // DMA1_Channel2->CMAR = (uint32_t) &adc_ch[0];
 
-    //Enable
-    //DMA1_Channel2->CCR |= DMA_CCR_EN;
+    // //Enable
+    // //DMA1_Channel2->CCR |= DMA_CCR_EN;
 
 #ifdef DMA_CH1_WITH_INTERRUPT
     NVIC_EnableIRQ(DMA1_Channel1_IRQn);

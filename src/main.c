@@ -66,6 +66,7 @@ volatile unsigned char timer_filters = 0;
 
 // Module Functions ----------------------------------------
 void TimingDelay_Decrement (void);
+void Shutdown_Mosfets (void);
 #ifdef WITH_OVERCURRENT_SHUTDOWN
 extern void EXTI4_15_IRQHandler(void);
 #endif
@@ -121,10 +122,7 @@ int main(void)
 
     EnablePreload_Mosfet_Q1;
     EnablePreload_Mosfet_Q2;
-    
-    // MA32Circular_Reset();
-    
-    UpdateTIMSync(DUTY_NONE);
+    Shutdown_Mosfets();
     
     //ADC and DMA configuration
     AdcConfig();
@@ -242,13 +240,28 @@ int main(void)
     PID_Small_Ki_Flush_Errors(&voltage_pid);
 
 #ifdef USE_CAR_BATTERY
+#ifdef USE_PWM_WITH_DITHER
+    voltage_pid.kp = 1 << 3;
+    voltage_pid.ki = 3 << 3;    //necesito error mayor a 3 por definicion en el pwm    
+    voltage_pid.kd = 0;
+#endif
+#ifdef USE_PWM_NO_DITHER
     voltage_pid.kp = 1;
     voltage_pid.ki = 3;    //necesito error mayor a 3 por definicion en el pwm    
     voltage_pid.kd = 0;
+#endif    
+
 #elif defined USE_BI_MOUNT_BATTERY
+#ifdef USE_PWM_WITH_DITHER
+    voltage_pid.kp = 1 << 3;
+    voltage_pid.ki = 3 << 3;    //necesito error mayor a 3 por definicion en el pwm    
+    voltage_pid.kd = 0;
+#endif
+#ifdef USE_PWM_NO_DITHER
     voltage_pid.kp = 1;
     voltage_pid.ki = 3;    //necesito error mayor a 3 por definicion en el pwm    
-    voltage_pid.kd = 0;    
+    voltage_pid.kd = 0;
+#endif    
 #endif
 
     //timer to power up
@@ -288,7 +301,7 @@ int main(void)
                 //reseteo del PID y control del mosfet
                 d = 0;
                 PID_Small_Ki_Flush_Errors(&voltage_pid);
-                CTRL_MOSFET(0);                
+                Shutdown_Mosfets();
 
                 //paso a alimentar desde la entrada de 36V
                 CTRL_SW_OFF;
@@ -316,6 +329,9 @@ int main(void)
                 CTRL_SW_ON;
                 board_state = SUPPLY_BY_BATTERY;
                 ChangeLed(LED_SUPPLY_BY_BATTERY);
+#ifdef USE_PWM_WITH_DITHER
+                EnableDitherInterrupt;
+#endif
                 break;
 
             case SUPPLY_BY_BATTERY:
@@ -328,7 +344,22 @@ int main(void)
                     if (soft_start_cnt > SOFT_START_CNT_ROOF)    //update 200us aprox.
                     {
                         soft_start_cnt = 0;
-                    
+
+#ifdef USE_PWM_WITH_DITHER                        
+                        if (d < DUTY_FOR_DMAX)    //uso d sin multiplicar
+                        {
+                            d++;
+                            TIM_LoadDitherSequences(d << 3);                            
+                        }
+                        else
+                        {
+                            //update PID
+                            voltage_pid.last_d = d << 3;
+                            ChangeLed(LED_VOLTAGE_MODE);
+                            board_state = VOLTAGE_MODE;
+                        }
+#endif
+#ifdef USE_PWM_NO_DITHER                        
                         if (d < DUTY_FOR_DMAX)
                         {
                             d++;
@@ -341,14 +372,23 @@ int main(void)
                             ChangeLed(LED_VOLTAGE_MODE);
                             board_state = VOLTAGE_MODE;
                         }
+#endif                        
                     }
                 }
                 else
                 {
+#ifdef USE_PWM_WITH_DITHER                    
+                    //update PID
+                    voltage_pid.last_d = d << 3;
+                    ChangeLed(LED_VOLTAGE_MODE);
+                    board_state = VOLTAGE_MODE;
+#endif
+#ifdef USE_PWM_NO_DITHER
                     //update PID
                     voltage_pid.last_d = d;
                     ChangeLed(LED_VOLTAGE_MODE);
                     board_state = VOLTAGE_MODE;
+#endif
                 }
                 
                 break;
@@ -359,6 +399,26 @@ int main(void)
                     undersampling = 0;
                     voltage_pid.setpoint = VOUT_SETPOINT;
                     voltage_pid.sample = sense_boost_filtered;    //only if undersampling > 16
+#ifdef USE_PWM_WITH_DITHER
+                    d = PID_Small_Ki(&voltage_pid);
+
+                    if (d > 0)
+                    {
+                        if (d > DUTY_FOR_DMAX_WITH_DITHER)
+                        {
+                            d = DUTY_FOR_DMAX_WITH_DITHER;
+                            voltage_pid.last_d = DUTY_FOR_DMAX_WITH_DITHER;
+                        }
+                    }
+                    else
+                    {
+                        d = 0;
+                        voltage_pid.last_d = 0;
+                    }
+                    
+                    TIM_LoadDitherSequences(d);
+#endif
+#ifdef USE_PWM_NO_DITHER
                     d = PID_Small_Ki(&voltage_pid);
 
                     if (d > 0)
@@ -376,6 +436,7 @@ int main(void)
                     }
                     
                     CTRL_MOSFET(d);
+#endif
                 }
                 else
                     undersampling++;
@@ -393,7 +454,7 @@ int main(void)
                     //reseteo del PID y control del mosfet
                     d = 0;
                     PID_Small_Ki_Flush_Errors(&voltage_pid);
-                    CTRL_MOSFET(0);                
+                    Shutdown_Mosfets();
 
                     CTRL_SW_OFF;
                     board_state = INPUT_BROWNOUT;
@@ -410,6 +471,10 @@ int main(void)
                 {
                     board_state = VOLTAGE_MODE;
                     ChangeLed(LED_VOLTAGE_MODE);
+#ifdef USE_PWM_WITH_DITHER
+                    EnableDitherInterrupt;
+#endif
+                    
                 }
                 break;
                 
@@ -453,7 +518,7 @@ int main(void)
         if ((board_state != OUTPUT_OVERVOLTAGE) &&
             (sense_boost_filtered > VOUT_MAX_THRESHOLD))
         {
-            CTRL_MOSFET(DUTY_NONE);
+            Shutdown_Mosfets();
             board_state = OUTPUT_OVERVOLTAGE;
             ChangeLed(LED_OUTPUT_OVERVOLTAGE);
         }
@@ -471,6 +536,17 @@ int main(void)
 
 //--- End of Main ---//
 
+void Shutdown_Mosfets (void)
+{
+#ifdef USE_PWM_WITH_DITHER
+    DisableDitherInterrupt;
+    CTRL_MOSFET(DUTY_NONE);
+    TIM_LoadDitherSequences(0);
+#endif
+#ifdef USE_PWM_NO_DITHER
+    CTRL_MOSFET(DUTY_NONE);
+#endif
+}
 
 void TimingDelay_Decrement(void)
 {

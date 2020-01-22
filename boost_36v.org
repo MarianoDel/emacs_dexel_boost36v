@@ -168,3 +168,4 @@ dividiendo
 ** Corte de Bateria
    - Con el corte de 12V minimo y 14V reconexion rebota un par de veces despues 
      del corte, 4 o 5 veces cada unos 5 minutos aprox.
+     

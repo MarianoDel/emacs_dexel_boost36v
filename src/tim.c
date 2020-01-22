@@ -1,5 +1,4 @@
 //---------------------------------------------
-// ##
 // ## @Author: Med
 // ## @Editor: Emacs - ggtags
 // ## @TAGS:   Global
@@ -14,19 +13,18 @@
 #include "hard.h"
 
 
-//--- VARIABLES EXTERNAS ---//
-extern volatile unsigned char timer_1seg;
-extern volatile unsigned short timer_led_comm;
+// Externals -------------------------------------------------------------------
 extern volatile unsigned short wait_ms_var;
-extern volatile unsigned short delta_t2;
 
-#ifdef INVERTER_MODE
-extern volatile unsigned char ac_sync_int_flag;
+
+// Globals ---------------------------------------------------------------------
+#ifdef USE_PWM_WITH_DITHER
+#define SIZEOF_DITHER_VECT    8
+volatile unsigned short v_dither_tim1_ch1[SIZEOF_DITHER_VECT] = { 0 };
+volatile unsigned short v_dither_tim3_ch1[SIZEOF_DITHER_VECT] = { 0 };
+volatile unsigned short* p_dither_tim1_ch1;
+volatile unsigned short* p_dither_tim3_ch1;
 #endif
-
-//--- VARIABLES GLOBALES ---//
-
-volatile unsigned short timer_1000 = 0;
 
 
 
@@ -158,11 +156,88 @@ void TIM_1_Init (void)
     temp |= 0x00000002;    //PA8 -> AF2
     GPIOA->AFR[1] = temp;    
 #endif
+
+#ifdef USE_PWM_WITH_DITHER
+    p_dither_tim1_ch1 = &v_dither_tim1_ch1[0];
+    p_dither_tim3_ch1 = &v_dither_tim3_ch1[0];
+
+    NVIC_EnableIRQ(TIM1_BRK_UP_TRG_COM_IRQn);
+    NVIC_SetPriority(TIM1_BRK_UP_TRG_COM_IRQn, 8);        
+#endif
     
-    // Enable timer ver UDIS
-    //TIM1->DIER |= TIM_DIER_UIE;
     TIM1->CR1 |= TIM_CR1_CEN;
 }
+
+
+#ifdef USE_PWM_WITH_DITHER
+//                                              0     1     2     3     4     5     6     7
+unsigned char v_sequence[SIZEOF_DITHER_VECT] = {0x00, 0x80, 0x88, 0xA8, 0xAA, 0xBA, 0xBB, 0xFB };
+
+void TIM_LoadDitherSequences (unsigned short new_duty)
+{
+    unsigned short * p1;
+    unsigned short * p3;
+
+    p1 = (unsigned short *) v_dither_tim1_ch1;
+    p3 = (unsigned short *) v_dither_tim3_ch1;
+
+    unsigned char seq_index = (unsigned char) (new_duty & 0x0007);
+    unsigned char seq = v_sequence[seq_index];    
+
+    unsigned short adj_duty = new_duty >> 3;
+    unsigned short adj_duty_plus_one = adj_duty + 1;
+
+    unsigned short adj_duty_inv = DUTY_100_PERCENT - 2 - adj_duty;
+    unsigned short adj_duty_plus_one_inv = DUTY_100_PERCENT - 2 - adj_duty_plus_one;
+    
+    for (unsigned char i = 0; i < SIZEOF_DITHER_VECT; i++)
+    {
+        if (seq & 0x01)
+        {
+            *(p1 + i) = adj_duty_plus_one;
+            *(p3 + i) = adj_duty_plus_one_inv;
+        }
+        else
+        {
+            *(p1 + i) = adj_duty;
+            *(p3 + i) = adj_duty_inv;
+        }
+
+        seq >>= 1;
+    }
+}
+
+
+void TIM1_BRK_UP_TRG_COM_IRQHandler (void)	
+{
+    //actualizo los valores de los canales mosfet con sequencias pre-calculadas
+    TIM1->CCR1 = *p_dither_tim1_ch1;
+    TIM3->CCR1 = *p_dither_tim3_ch1;
+
+    //ajusto los punteros para la proxima vuelta
+    if (p_dither_tim1_ch1 < &v_dither_tim1_ch1[SIZEOF_DITHER_VECT - 1])
+    {
+        p_dither_tim1_ch1++;
+        p_dither_tim3_ch1++;
+    }
+    else
+    {
+        p_dither_tim1_ch1 = &v_dither_tim1_ch1[0];
+        p_dither_tim3_ch1 = &v_dither_tim3_ch1[0];
+    }
+
+#ifdef USE_LED_FOR_TIM1_INT
+    if (LED)
+        LED_OFF;
+    else
+        LED_ON;
+#endif
+
+    //bajar flag
+    if (TIM1->SR & TIM_SR_UIF)
+        TIM1->SR = 0x00;
+}
+#endif
 
 
 void TIM_3_Init (void)
