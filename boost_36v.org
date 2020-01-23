@@ -169,3 +169,14 @@ dividiendo
    - Con el corte de 12V minimo y 14V reconexion rebota un par de veces despues 
      del corte, 4 o 5 veces cada unos 5 minutos aprox.
      
+* Pruebas finales con bateria 23-01-20
+
+| Minutos | Vin    | Otros                                  |
+|---------+--------+----------------------------------------|
+|       0 | 15.32V | Carga de bateria toda la noche         |
+|      15 | 14.15V | Algo inestable en esta tension         |
+|      30 | 12.79V |                                        |
+|      45 | 12V    |                                        |
+|      55 | 11V    |                                        |
+|      57 | 10.5V  | Corta, la bateria recupera hasta 13.3V |
+|         |        |                                        |

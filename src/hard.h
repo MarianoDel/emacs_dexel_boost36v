@@ -24,7 +24,7 @@
 
 // from battery sensor
 #define BATT_10    347
-#define BATT_12    416
+#define BATT_12    416    //416 es 12.7V en la entrada
 #define BATT_14    485
 #define BATT_16    555
 #define BATT_18    624
@@ -40,7 +40,7 @@
 #define BATTERY_MAX    BATT_16
 #define BATTERY_TO_RECONNECT  BATT_12
 #elif defined USE_BI_MOUNT_BATTERY
-#define BATTERY_MIN    BATT_12
+#define BATTERY_MIN    BATT_10
 #define BATTERY_MAX    BATT_18
 #define BATTERY_TO_RECONNECT  BATT_14
 #else
@@ -211,8 +211,8 @@ typedef enum
 #define LED_VOLTAGE_MODE          4
 #define LED_OUTPUT_OVERVOLTAGE                 5
 #define LED_INPUT_BROWNOUT    6
-#define LED_OVERCURRENT_POS           7
-#define LED_OVERCURRENT_NEG           8
+#define LED_PEAK_OVERCURRENT           7
+
 #define LED_POWER_UP    LED_STANDBY
 
 #define LED_TOGGLE do { if (LED) \

@@ -497,6 +497,10 @@ int main(void)
                 break;
             
             case PEAK_OVERCURRENT:
+                if (!timer_standby)
+                {
+                    board_state = POWER_UP;
+                }
                 break;
 
             case BIAS_OVERVOLTAGE:
@@ -521,6 +525,16 @@ int main(void)
             Shutdown_Mosfets();
             board_state = OUTPUT_OVERVOLTAGE;
             ChangeLed(LED_OUTPUT_OVERVOLTAGE);
+        }
+
+        //for overcurrent
+        if (overcurrent_shutdown > 40)
+        {
+            Shutdown_Mosfets();
+            board_state = PEAK_OVERCURRENT;
+            ChangeLed(LED_PEAK_OVERCURRENT);
+            overcurrent_shutdown = 0;
+            timer_standby = 2000;
         }
 
 #ifdef USE_LED_FOR_MAIN_STATES
@@ -580,25 +594,46 @@ void TimingDelay_Decrement(void)
 
 void EXTI4_15_IRQHandler(void)
 {
-#ifdef HARD_TEST_MODE_INT_WITH_PWM
+// #ifdef HARD_TEST_MODE_INT_WITH_PWM
+//     if (PROT_Q1_Int)
+//     {
+//         LED_ON;
+//         PROT_Q1_Ack;    //before this 800ns from the event
+//                         //after this 1.04us from the event
+//     }
+
+//     if (PROT_Q2_Int)
+//     {
+//         LED_OFF;
+//         PROT_Q2_Ack;
+//     }
+    
+//     // if (LED)
+//     //     LED_OFF;
+//     // else
+//     //     LED_ON;
+// #endif
+
     if (PROT_Q1_Int)
     {
-        LED_ON;
+        DisablePreload_Mosfet_Q1;
+        Mosfet_Q1_Shutdown;
+        EnablePreload_Mosfet_Q1;
+        overcurrent_shutdown++;
+        
         PROT_Q1_Ack;    //before this 800ns from the event
                         //after this 1.04us from the event
     }
 
     if (PROT_Q2_Int)
     {
-        LED_OFF;
+        DisablePreload_Mosfet_Q2;
+        Mosfet_Q2_Shutdown;
+        EnablePreload_Mosfet_Q2;
+        overcurrent_shutdown++;
+
         PROT_Q2_Ack;
     }
-    
-    // if (LED)
-    //     LED_OFF;
-    // else
-    //     LED_ON;
-#endif
     
 }
 

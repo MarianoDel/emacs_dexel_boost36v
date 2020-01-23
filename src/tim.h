@@ -84,10 +84,12 @@
 //--- Exported wrapped functions ---//
 #define CTRL_LED(X)    Update_TIM1_CH3(X)
 
-#define EnablePreload_Mosfet_Q1    (TIM3->CR1 |= TIM_CCMR1_OC1PE)
-#define DisablePreload_Mosfet_Q1    (TIM3->CR1 &= ~TIM_CCMR1_OC1PE)
+#define EnablePreload_Mosfet_Q1    (TIM3->CCMR1 |= TIM_CCMR1_OC1PE)
+#define DisablePreload_Mosfet_Q1    (TIM3->CCMR1 &= ~TIM_CCMR1_OC1PE)
 #define EnablePreload_Mosfet_Q2    (TIM1->CCMR1 |= TIM_CCMR1_OC1PE)
 #define DisablePreload_Mosfet_Q2    (TIM1->CCMR1 &= ~TIM_CCMR1_OC1PE)
+#define Mosfet_Q1_Shutdown    (TIM3->CCR1 = DUTY_100_PERCENT)
+#define Mosfet_Q2_Shutdown    (TIM1->CCR1 = DUTY_NONE)
 
 #define UpdateTIMSync(X)    do { \
     TIM1->CCR1 = (X); \
