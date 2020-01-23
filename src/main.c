@@ -251,23 +251,36 @@ int main(void)
 #endif
 
     unsigned short battery_min = 0;
-    // unsigned short battery_max = 0;
     unsigned short battery_to_reconnect = 0;
 
+#if defined VER_1_1
     if (PIN_BATTERY_SELECT)
     {
         //car battery
         battery_min = BATTERY_MIN_CAR;
-        // battery_max = BATTERY_MAX_CAR;
         battery_to_reconnect = BATTERY_TO_RECONNECT_CAR;
     }
     else
     {
         //bi mount battery
         battery_min = BATTERY_MIN_BI_MOUNT;
-        // battery_max = BATTERY_MAX_BI_MOUNT;
         battery_to_reconnect = BATTERY_TO_RECONNECT_BI_MOUNT;
     }
+#elif defined VER_1_0
+#if defined CAR_BATTERY
+    //car battery
+    battery_min = BATTERY_MIN_CAR;
+    battery_to_reconnect = BATTERY_TO_RECONNECT_CAR;
+#elif defined BI_MOUNT_BATTERY
+    //bi mount battery
+    battery_min = BATTERY_MIN_BI_MOUNT;
+    battery_to_reconnect = BATTERY_TO_RECONNECT_BI_MOUNT;
+#else
+#error "Select Type of Battery for VER_1_0 on hard.h"
+#endif
+#else
+#error "Select the Board Version on hard.h"
+#endif
 
     //timer to power up
     ChangeLed(LED_POWER_UP);

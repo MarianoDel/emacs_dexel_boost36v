@@ -46,7 +46,10 @@
 #define VER_1_1    //version de produccion
 // #define VER_1_0    //version original, un solo prototipo
 
-
+#ifdef VER_1_0
+// #define CAR_BATTERY
+#define BI_MOUNT_BATTERY
+#endif
 
 //--- Configuration for Hardware Versions ------------------
 #ifdef VER_1_1
