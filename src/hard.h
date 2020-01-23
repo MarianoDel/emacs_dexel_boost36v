@@ -10,12 +10,23 @@
 #define _HARD_H_
 
 //--- Defines For Configuration ----------------------------
-// #define USE_CAR_BATTERY
-#define USE_BI_MOUNT_BATTERY
+// where to go?
+#define VOUT_SETPOINT    VOLTS_36
+#define VOUT_FOR_SOFT_START    VOLTS_34
+#define VOUT_MAX_THRESHOLD    VOLTS_40
+#define UNDERSAMPLING_TICKS    20
 
-// from output sensors
+// for output sensors
 #define MIN_PWR_36V    VOLTS_32
 #define MAX_PWR_36V    VOLTS_40
+
+// for battery settings
+#define BATTERY_MIN_CAR    BATT_10
+#define BATTERY_MAX_CAR    BATT_16
+#define BATTERY_TO_RECONNECT_CAR  BATT_12
+#define BATTERY_MIN_BI_MOUNT    BATT_10
+#define BATTERY_MAX_BI_MOUNT    BATT_18
+#define BATTERY_TO_RECONNECT_BI_MOUNT  BATT_14
 
 #define VOLTS_40    966
 #define VOLTS_36    869
@@ -29,33 +40,18 @@
 #define BATT_16    555
 #define BATT_18    624
 
-// where to go?
-#define VOUT_SETPOINT    VOLTS_36
-#define VOUT_FOR_SOFT_START    VOLTS_34
-#define VOUT_MAX_THRESHOLD    VOLTS_40
-#define UNDERSAMPLING_TICKS    20
 
-#if defined USE_CAR_BATTERY
-#define BATTERY_MIN    BATT_10
-#define BATTERY_MAX    BATT_16
-#define BATTERY_TO_RECONNECT  BATT_12
-#elif defined USE_BI_MOUNT_BATTERY
-#define BATTERY_MIN    BATT_10
-#define BATTERY_MAX    BATT_18
-#define BATTERY_TO_RECONNECT  BATT_14
-#else
-#error "Select type of battery on hard.h"
-#endif
 
 //--- Hardware Board Version -------------------------------
-#define VER_1_0    //version original
+#define VER_1_1    //version de produccion
+// #define VER_1_0    //version original, un solo prototipo
 
 
 
 //--- Configuration for Hardware Versions ------------------
-#ifdef VER_2_0
-#define HARDWARE_VERSION_2_0
-#define SOFTWARE_VERSION_2_0
+#ifdef VER_1_1
+#define HARDWARE_VERSION_1_1
+#define SOFTWARE_VERSION_1_1
 #endif
 
 #ifdef VER_1_0
@@ -123,6 +119,56 @@
 #endif
 
 //------- PIN CONFIG ----------------------
+#ifdef VER_1_1
+//GPIOA pin0	Sense_BAT
+//GPIOA pin1	Sense_BOOST
+//GPIOA pin2	Sense_PWR_36V
+
+//GPIOA pin3	CTROL_SW
+#define CTRL_SW    ((GPIOA->ODR & 0x0008) != 0)
+#define CTRL_SW_ON    (GPIOA->BSRR = 0x00000008)
+#define CTRL_SW_OFF    (GPIOA->BSRR = 0x00080000)
+
+//GPIOA pin4
+#define PIN_BATTERY_SELECT ((GPIOA->IDR & 0x0010) != 0)
+
+//GPIOA pin5    NC
+
+//GPIOA pin6    TIM3_CH1 (CTRL_Q1)
+
+//GPIOA pin7    
+//GPIOB pin0    
+//GPIOB pin1	NC
+
+//GPIOA pin8    TIM1_CH1 (CTRL_Q2)
+
+//GPIOA pin9    NC
+
+//GPIOA pin10	LED
+#define LED    ((GPIOA->ODR & 0x0400) != 0)
+#define LED_ON    (GPIOA->BSRR = 0x00000400)
+#define LED_OFF    (GPIOA->BSRR = 0x04000000)
+
+//GPIOA pin11    NC
+
+//GPIOA pin12	
+
+//GPIOA pin13	
+//GPIOA pin14	
+//GPIOA pin15    NC
+
+//GPIOB pin3	
+//GPIOB pin4	NC
+
+//GPIOB pin5
+#define PROT_Q2 ((GPIOB->IDR & 0x0020) != 0)
+
+//GPIOB pin6
+#define PROT_Q1 ((GPIOB->IDR & 0x0040) != 0)
+
+//GPIOB pin7	NC
+#endif
+
 #ifdef VER_1_0
 //GPIOA pin0	Sense_BAT
 //GPIOA pin1	Sense_BOOST

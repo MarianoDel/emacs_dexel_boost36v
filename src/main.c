@@ -239,7 +239,6 @@ int main(void)
     //start the pid data for controllers
     PID_Small_Ki_Flush_Errors(&voltage_pid);
 
-#ifdef USE_CAR_BATTERY
 #ifdef USE_PWM_WITH_DITHER
     voltage_pid.kp = 1 << 3;
     voltage_pid.ki = 3 << 3;    //necesito error mayor a 3 por definicion en el pwm    
@@ -249,20 +248,26 @@ int main(void)
     voltage_pid.kp = 1;
     voltage_pid.ki = 3;    //necesito error mayor a 3 por definicion en el pwm    
     voltage_pid.kd = 0;
-#endif    
+#endif
 
-#elif defined USE_BI_MOUNT_BATTERY
-#ifdef USE_PWM_WITH_DITHER
-    voltage_pid.kp = 1 << 3;
-    voltage_pid.ki = 3 << 3;    //necesito error mayor a 3 por definicion en el pwm    
-    voltage_pid.kd = 0;
-#endif
-#ifdef USE_PWM_NO_DITHER
-    voltage_pid.kp = 1;
-    voltage_pid.ki = 3;    //necesito error mayor a 3 por definicion en el pwm    
-    voltage_pid.kd = 0;
-#endif    
-#endif
+    unsigned short battery_min = 0;
+    // unsigned short battery_max = 0;
+    unsigned short battery_to_reconnect = 0;
+
+    if (PIN_BATTERY_SELECT)
+    {
+        //car battery
+        battery_min = BATTERY_MIN_CAR;
+        // battery_max = BATTERY_MAX_CAR;
+        battery_to_reconnect = BATTERY_TO_RECONNECT_CAR;
+    }
+    else
+    {
+        //bi mount battery
+        battery_min = BATTERY_MIN_BI_MOUNT;
+        // battery_max = BATTERY_MAX_BI_MOUNT;
+        battery_to_reconnect = BATTERY_TO_RECONNECT_BI_MOUNT;
+    }
 
     //timer to power up
     ChangeLed(LED_POWER_UP);
@@ -290,7 +295,7 @@ int main(void)
                     {
                         board_state = TO_SUPPLY_BY_MAINS;
                     }
-                    else if (sense_bat_filtered > BATTERY_TO_RECONNECT)
+                    else if (sense_bat_filtered > battery_to_reconnect)
                     {
                         board_state = TO_SUPPLY_BY_BATTERY;
                     }
@@ -449,7 +454,7 @@ int main(void)
                 }
 
                 //si baja demasiado la bateria
-                if (sense_bat_filtered < BATTERY_MIN)
+                if (sense_bat_filtered < battery_min)
                 {
                     //reseteo del PID y control del mosfet
                     d = 0;
@@ -489,7 +494,7 @@ int main(void)
                     }
 
                     //si se recupera la bateria
-                    if (sense_bat_filtered > BATTERY_TO_RECONNECT)
+                    if (sense_bat_filtered > battery_to_reconnect)
                     {
                         board_state = TO_SUPPLY_BY_BATTERY;
                     }
