@@ -10,15 +10,22 @@
 #define _HARD_H_
 
 //--- Defines For Configuration ----------------------------
-// where to go?
-#define VOUT_SETPOINT    VOLTS_36
-#define VOUT_FOR_SOFT_START    VOLTS_34
-#define VOUT_MAX_THRESHOLD    VOLTS_40
+// where to go? for 24V
+#define VOUT_SETPOINT    VOLTS_24
+#define VOUT_FOR_SOFT_START    VOLTS_22
+#define VOUT_MAX_THRESHOLD    VOLTS_27
+#define MIN_PWR_SUPPLY    VOLTS_21    // for outputs sensors
+#define MAX_PWR_SUPPLY    VOLTS_27    // for outputs sensors
+
+// where to go? for 36V
+// #define VOUT_SETPOINT    VOLTS_36
+// #define VOUT_FOR_SOFT_START    VOLTS_34
+// #define VOUT_MAX_THRESHOLD    VOLTS_40
+// #define MIN_PWR_SUPPLY    VOLTS_32    // for outputs sensors
+// #define MAX_PWR_SUPPLY    VOLTS_40    // for outputs sensors
+
 #define UNDERSAMPLING_TICKS    20
 
-// for output sensors
-#define MIN_PWR_36V    VOLTS_32
-#define MAX_PWR_36V    VOLTS_40
 
 // for battery settings
 #define BATTERY_MIN_CAR    BATT_10
@@ -33,6 +40,13 @@
 #define VOLTS_34    820
 #define VOLTS_32    773
 
+#define VOLTS_27    652
+#define VOLTS_24    580
+#define VOLTS_22    531
+#define VOLTS_21    507
+
+
+
 // from battery sensor
 #define BATT_10    347
 #define BATT_12    416    //416 es 12.7V en la entrada
@@ -43,8 +57,8 @@
 
 
 //--- Hardware Board Version -------------------------------
-#define VER_1_1    //version de produccion
-// #define VER_1_0    //version original, un solo prototipo
+// #define VER_1_1    //version de produccion
+#define VER_1_0    //version original, un solo prototipo
 
 #ifdef VER_1_0
 // #define CAR_BATTERY

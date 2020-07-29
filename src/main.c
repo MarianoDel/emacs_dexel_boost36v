@@ -303,8 +303,8 @@ int main(void)
                 //the filters completes their action on 16 * 1/24KHz = 666us
                 if (!timer_standby)
                 {
-                    if ((sense_pwr_36_filtered > MIN_PWR_36V) &&
-                        (sense_pwr_36_filtered < MAX_PWR_36V))
+                    if ((sense_pwr_36_filtered > MIN_PWR_SUPPLY) &&
+                        (sense_pwr_36_filtered < MAX_PWR_SUPPLY))
                     {
                         board_state = TO_SUPPLY_BY_MAINS;
                     }
@@ -332,8 +332,8 @@ int main(void)
                 if (!timer_standby)
                 {
                     //input undervoltage or overvoltage
-                    if ((sense_pwr_36_filtered < MIN_PWR_36V) ||
-                        (sense_pwr_36_filtered > MAX_PWR_36V)) 
+                    if ((sense_pwr_36_filtered < MIN_PWR_SUPPLY) ||
+                        (sense_pwr_36_filtered > MAX_PWR_SUPPLY)) 
                     {
                         timer_standby = 1000;
                         board_state = POWER_UP;
@@ -363,7 +363,7 @@ int main(void)
                     {
                         soft_start_cnt = 0;
 
-#ifdef USE_PWM_WITH_DITHER                        
+#ifdef USE_PWM_WITH_DITHER
                         if (d < DUTY_FOR_DMAX)    //uso d sin multiplicar
                         {
                             d++;
@@ -460,8 +460,8 @@ int main(void)
                     undersampling++;
 
                 //si vuelve la alimentacion principal
-                if ((sense_pwr_36_filtered > MIN_PWR_36V) &&
-                    (sense_pwr_36_filtered < MAX_PWR_36V))
+                if ((sense_pwr_36_filtered > MIN_PWR_SUPPLY) &&
+                    (sense_pwr_36_filtered < MAX_PWR_SUPPLY))
                 {
                     board_state = TO_SUPPLY_BY_MAINS;
                 }
@@ -500,8 +500,8 @@ int main(void)
                 if (!timer_standby)
                 {
                     //si vuelve la alimentacion principal
-                    if ((sense_pwr_36_filtered > MIN_PWR_36V) &&
-                        (sense_pwr_36_filtered < MAX_PWR_36V))
+                    if ((sense_pwr_36_filtered > MIN_PWR_SUPPLY) &&
+                        (sense_pwr_36_filtered < MAX_PWR_SUPPLY))
                     {
                         board_state = TO_SUPPLY_BY_MAINS;
                     }

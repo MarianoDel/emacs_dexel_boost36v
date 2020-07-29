@@ -100,6 +100,8 @@
 
 #define EnableDitherInterrupt    (TIM1->DIER |= TIM_DIER_UIE)
 #define DisableDitherInterrupt    (TIM1->DIER &= ~TIM_DIER_UIE)    
+#define EnableTim17Interrupt    (TIM17->DIER |= TIM_DIER_UIE)
+#define DisableTim17Interrupt    (TIM17->DIER &= ~TIM_DIER_UIE)
     
 //--- Exported functions ---//
 
