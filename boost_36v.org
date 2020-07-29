@@ -180,3 +180,11 @@ dividiendo
 |      55 | 11V    |                                        |
 |      57 | 10.5V  | Corta, la bateria recupera hasta 13.3V |
 |         |        |                                        |
+
+* Cambios 29-07-2020
+** Pongo 24V de salida
+   - cambio en hard.h los setpoints de 36V -> 24V
+
+** Detecto que podria haber un tema con el dither
+   - el d lo usa dividido 8, con lo cual puedo estar perdiendo definicion
+
